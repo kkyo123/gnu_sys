@@ -1,6 +1,0 @@
-터미널에서 npm run dev 를 통해 개발 서버 실행 가능
-로컬 기본 주소 -> http://localhost:5173
-
-App.jsx 파일을 수정하면 브라우저가 자동으로 반영함
-- main.jsx : 앱 시작점
-- App.jsx : 메인 컴포넌트

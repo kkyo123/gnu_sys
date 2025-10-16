@@ -4,10 +4,10 @@ import "./login.css"; // CSS는 별도 파일로 분리 가능
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;  // 로그인 성공 후 App에 전달
-  onSignup: () => void;              // 회원가입 버튼 클릭 시
+  onSignup?: () => void;              // 회원가입 버튼 클릭 시
 }
 
-function LoginPage({ onLogin, onSignup }: LoginPageProps) {
+function Login({ onLogin, onSignup }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -100,9 +100,6 @@ function LoginPage({ onLogin, onSignup }: LoginPageProps) {
           </button>
           </p>
           
-          <button type="button" className="link-btn">
-            비밀번호를 잊으셨나요?
-          </button>
         </div>
 
         <footer className="login-footer">
@@ -115,4 +112,4 @@ function LoginPage({ onLogin, onSignup }: LoginPageProps) {
 }
 
 // ✅ default export
-export default LoginPage;
+export default Login;

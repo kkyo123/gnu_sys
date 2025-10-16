@@ -1,0 +1,134 @@
+.card {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  padding: 1.5rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card-description {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #007aff;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.eye-button {
+  position: absolute;
+  right: 0.5rem;
+  top: 0;
+  bottom: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #555;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.6rem;
+  background-color: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.submit-button:hover {
+  background-color: #005fcc;
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-top: 1.5rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #007aff;
+  cursor: pointer;
+  text-decoration: underline;
+}

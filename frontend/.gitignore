@@ -1,3 +1,6 @@
+# ------------------------------
+# Logs (기존 + 유지)
+# ------------------------------
 # Logs
 logs
 *.log
@@ -7,18 +10,61 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ------------------------------
+# Dependencies / Package managers (보강)
+# ------------------------------
+node_modules/          # ← 슬래시로 폴더 전체 무시
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Editor directories and files
+# ------------------------------
+# Build outputs / Framework caches (보강)
+# ------------------------------
+dist/
+dist-ssr/
+build/
+.vite/
+.next/
+out/
+.storybook-out/
+coverage/
+
+# ------------------------------
+# Local env & secrets (보강)
+# ------------------------------
+*.local
+.env
+.env.*
+!.env.example   # 예시 파일은 추적 가능하게
+
+# ------------------------------
+# Tool caches (보강)
+# ------------------------------
+.eslintcache
+.turbo/
+.cache/
+.parcel-cache/
+vite.config.ts.timestamp-*
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# ------------------------------
+# Editor / OS files (기존 + 보강)
+# ------------------------------
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# ------------------------------
+# Hosting / Deploy (보강: 쓰는 경우에만)
+# ------------------------------
+.vercel/
+.netlify/

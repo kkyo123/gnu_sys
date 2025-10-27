@@ -61,12 +61,12 @@ export default function App() {
         {/* 로그인 필요 영역 */} 
         <Route element={<RequireAuth user={user} />}> 
           <Route element={<AppLayout user={user} onLogout={handleLogout} />}> 
-            <Route path="/" element={<Home />} /> 
+            <Route path="/" element={<Dashboard />} /> 
             <Route path="/search" element={<Search />} /> 
             <Route path="/recommend" element={<Recommend />} /> 
             <Route path="/graduation" element={<Graduation />} /> 
             <Route path="/mypage" element={<Mypage />} /> 
-            <Route path="/dashboard" element={<Dashboard />} /> 
+            <Route path="/home" element={<Home />} /> 
           </Route> 
         </Route> 
  

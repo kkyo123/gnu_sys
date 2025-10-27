@@ -67,7 +67,7 @@ const NoticeItem: React.FC<NoticeItemProps> = ({ title, date, badge, badgeType }
   </div>
 );
 
-const App: React.FC = () => {
+const Dashboard: React.FC = () => {
   const courses = [
     { name: '자료구조', color: '#4A90E2', credits: '3학점', grade: 'A+' },
     { name: '웹프로그래밍', color: '#F5A623', credits: '3학점', grade: 'A0' },
@@ -264,4 +264,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default Dashboard;

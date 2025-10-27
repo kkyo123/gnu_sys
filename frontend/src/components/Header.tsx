@@ -20,7 +20,7 @@ export function Header({ user, onLogout }: HeaderProps) {
   return (
     <header className="header">
       {/* 로고 */}
-      <div className="logo" onClick={()=>navigate("/home")}>
+      <div className="logo" onClick={()=>navigate("/")}>
         <GraduationCap size={24} />
         <span>UniCourse</span>
       </div>

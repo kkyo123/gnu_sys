@@ -1,70 +1,78 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useState } from "react"; 
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom"; 
+ 
+import Home from "./pages/Home"; 
+import Search from "./pages/Search"; 
+import Recommend from "./pages/Recommend"; 
+import Graduation from "./pages/Graduation"; 
+import Mypage from "./pages/Mypage"; 
+import Login from "./pages/Login"; 
+import Signup from "./pages/Signup"; 
+import Header from "./components/Header"; 
+import Dashboard from "./pages/Dashboard"; 
 
-// 페이지 컴포넌트 import
-import Home from "./pages/Home";
-import Search from "./pages/Search";
-import Recommend from "./pages/Recommend"
-import Graduation from "./pages/Graduation"
-import Mypage from "./pages/Mypage"
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Header from "./components/Header";
-import "./components/Header.css";
-
-function App() {
-  const [user, setUser] = useState<any>(null);
-
-  const handleLogin = (userData: any) => {
-    setUser(userData); // 로그인 성공 시 user 상태 업데이트
-  };
-
-  const handleLogout = () => {
-    setUser(null); // 로그아웃 시 user 초기화
-  };
-
-
-  // 로그인 상태이면 Router 안에서 페이지 렌더링
- return (
-    <Router>
-      {/* user가 없으면 로그인/회원가입 라우트만 접근 가능 */}
-      {!user ? (
-        <Routes>
-          <Route 
-            path="/login" 
-            element={
-              <Login 
-                onLogin={handleLogin}
-                onSignup={() => window.location.href = "/signup"}
-              />
-            } 
-          />
-          <Route path="/signup" element={<Signup />} />
-          {/* 기본 경로일 때 로그인 페이지로 이동 */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      ) : (
-        <>
-          {/* 상단 헤더 */}
-          <Header user={user} onLogout={handleLogout} />
-
-          {/* 콘텐츠 (헤더 아래로) */}
-          <div style={{ paddingTop: "60px" }}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/recommend" element={<Recommend />} />
-              <Route path="/graduation" element={<Graduation />} />
-              <Route path="/mypage" element={<Mypage />} />
-              {/* 잘못된 경로는 홈으로 이동 */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </>
-      )}
-    </Router>
-  );
+// ── User 타입 정의 ───────────────────────────────────────────
+interface User { 
+  name: string;
+  id?: number; 
+  email?: string;
+  // 필요한 다른 필드 추가 가능
+} 
+ 
+// ── Auth Gate: 로그인 필요 영역 ─────────────────────────────── 
+function RequireAuth({ user }: { user: User | null }) { 
+  if (!user) return <Navigate to="/login" replace />; 
+  return <Outlet />; // 자식 라우트 렌더 
+} 
+ 
+// ── Public Gate: 로그인 상태면 접근 금지(로그인/회원가입) ──── 
+function PublicOnly({ user }: { user: User | null }) { 
+  if (user) return <Navigate to="/" replace />; 
+  return <Outlet />; 
+} 
+ 
+// ── 로그인된 화면 공통 레이아웃(헤더 + 컨텐츠 패딩) ─────────── 
+function AppLayout({ user, onLogout }: { user: User | null; onLogout: () => void }) { 
+  return ( 
+    <> 
+      <Header user={user} onLogout={onLogout} /> 
+      <div style={{ paddingTop: 60 }}> 
+        <Outlet /> 
+      </div> 
+    </> 
+  ); 
+} 
+ 
+export default function App() { 
+  const [user, setUser] = useState<User | null>(null); 
+ 
+  const handleLogin = (userData: User) => setUser(userData); 
+  const handleLogout = () => setUser(null); 
+ 
+  return ( 
+    <Router> 
+      <Routes> 
+        {/* 비로그인 전용: 로그인/회원가입 */} 
+        <Route element={<PublicOnly user={user} />}> 
+          <Route path="/login" element={<Login onLogin={handleLogin} />} /> 
+          <Route path="/signup" element={<Signup />} /> 
+        </Route> 
+ 
+        {/* 로그인 필요 영역 */} 
+        <Route element={<RequireAuth user={user} />}> 
+          <Route element={<AppLayout user={user} onLogout={handleLogout} />}> 
+            <Route path="/" element={<Home />} /> 
+            <Route path="/search" element={<Search />} /> 
+            <Route path="/recommend" element={<Recommend />} /> 
+            <Route path="/graduation" element={<Graduation />} /> 
+            <Route path="/mypage" element={<Mypage />} /> 
+            <Route path="/dashboard" element={<Dashboard />} /> 
+          </Route> 
+        </Route> 
+ 
+        {/* 기타 → 상태에 따라 적절히 리다이렉트 */} 
+        <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} /> 
+      </Routes> 
+    </Router> 
+  ); 
 }
-
-
-export default App;

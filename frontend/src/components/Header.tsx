@@ -1,13 +1,13 @@
 import React from "react";
 import { GraduationCap, Search, BookOpen, User, LogOut } from "lucide-react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ✅ 필요한 것만 남김
+
 
 
 import "./Header.css";
 
 interface HeaderProps {
-  user?: { name?: string };
+  user: { name: string; id?: number; email?: string } | null
   onLogout: () => void;
 }
 

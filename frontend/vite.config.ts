@@ -56,5 +56,13 @@
     server: {
       port: 3000,
       open: true,
+      proxy: {
+        "/api": {
+          target: "http://localhost:8000",
+          changeOrigin: true,
+          // Forward "/api/courses" -> "http://localhost:8000/courses"
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
     },
   });

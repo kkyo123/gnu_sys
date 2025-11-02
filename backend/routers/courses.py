@@ -4,7 +4,7 @@ import re
 from database.connection import get_db, get_course_collections, ensure_indexes
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/courses", tags=["courses"])
+router = APIRouter(tags=["courses"])
 
 class CourseOut(BaseModel):
     requirement_id: Optional[str] = None

@@ -50,23 +50,31 @@ h1 {
   }
 }
 
+.main-content {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 두 열 */
+  grid-template-rows: repeat(2, 1fr);   /* 두 행 */
+  gap: 1.5rem;  /* 카드 간격 */
+  padding: 0 20px 20px;
+  /*max-width: 1400px;*/
+  margin: 0 auto;
+  justify-items: stretch;
+  align-items: start;
+}
+
 .card {
   background-color: white;
   border-radius: 12px;
   border: 1px solid #e5e5e5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  /* ✅ 핵심 수정 */
+  width: 100%;
+  min-width: 0;        /* 그리드/플렉스 자식 수축 허용 */
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 1024px) {
-  .main-content {
-    grid-template-columns: 1fr;
-    padding: 0 20px 40px;
-  }
-  
-  .header {
-    padding: 30px 20px 20px;
-  }
-}
+
 
 .card-header {
   display: flex;

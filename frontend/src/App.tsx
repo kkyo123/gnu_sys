@@ -1,78 +1,70 @@
-import React, { useState } from "react"; 
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom"; 
- 
-import Home from "./pages/Home"; 
-import Search from "./pages/Search/Search"; 
-import Recommend from "./pages/Search/Recommend"; 
-import Graduation from "./pages/Search/Graduation"; 
-import Mypage from "./pages/Mypage"; 
-import Login from "./pages/Auth/Login"; 
-import Signup from "./pages/Auth/Signup"; 
-import Header from "./components/Header"; 
-import Dashboard from "./pages/Dashboard/Dashboard"; 
+import React, { useState } from 'react';
+import { Header } from './components/Header';
+import { MainPage } from './components/MainPage';
+import { LoginPage } from './components/LoginPage';
+import { SignupPage } from './components/SignupPage';
+import { CourseSearch } from './components/CourseSearch';
+import { CourseRecommendation } from './components/CourseRecommendation';
+import { GraduationRequirements } from './components/GraduationRequirements';
+import { MyPage } from './components/MyPage';
 
-// ── User 타입 정의 ───────────────────────────────────────────
-interface User { 
-  name: string;
-  id?: number; 
-  email?: string;
-  // 필요한 다른 필드 추가 가능
-} 
- 
-// ── Auth Gate: 로그인 필요 영역 ─────────────────────────────── 
-function RequireAuth({ user }: { user: User | null }) { 
-  if (!user) return <Navigate to="/login" replace />; 
-  return <Outlet />; // 자식 라우트 렌더 
-} 
- 
-// ── Public Gate: 로그인 상태면 접근 금지(로그인/회원가입) ──── 
-function PublicOnly({ user }: { user: User | null }) { 
-  if (user) return <Navigate to="/" replace />; 
-  return <Outlet />; 
-} 
- 
-// ── 로그인된 화면 공통 레이아웃(헤더 + 컨텐츠 패딩) ─────────── 
-function AppLayout({ user, onLogout }: { user: User | null; onLogout: () => void }) { 
-  return ( 
-    <> 
-      <Header user={user} onLogout={onLogout} /> 
-      <div style={{ paddingTop: 60 }}> 
-        <Outlet /> 
-      </div> 
-    </> 
-  ); 
-} 
- 
-export default function App() { 
-  const [user, setUser] = useState<User | null>(null); 
- 
-  const handleLogin = (userData: User) => setUser(userData); 
-  const handleLogout = () => setUser(null); 
- 
-  return ( 
-    <Router> 
-      <Routes> 
-        {/* 비로그인 전용: 로그인/회원가입 */} 
-        <Route element={<PublicOnly user={user} />}> 
-          <Route path="/login" element={<Login onLogin={handleLogin} />} /> 
-          <Route path="/signup" element={<Signup />} /> 
-        </Route> 
- 
-        {/* 로그인 필요 영역 */} 
-        <Route element={<RequireAuth user={user} />}> 
-          <Route element={<AppLayout user={user} onLogout={handleLogout} />}> 
-            <Route path="/" element={<Dashboard />} /> 
-            <Route path="/search" element={<Search />} /> 
-            <Route path="/recommend" element={<Recommend />} /> 
-            <Route path="/graduation" element={<Graduation />} /> 
-            <Route path="/mypage" element={<Mypage />} /> 
-            <Route path="/home" element={<Home />} /> 
-          </Route> 
-        </Route> 
- 
-        {/* 기타 → 상태에 따라 적절히 리다이렉트 */} 
-        <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} /> 
-      </Routes> 
-    </Router> 
-  ); 
+export default function App() {
+  const [currentPage, setCurrentPage] = useState('main');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+    setCurrentPage('main');
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsLoggedIn(false);
+    setCurrentPage('main');
+  };
+
+  const renderPage = () => {
+    if (!isLoggedIn && currentPage !== 'signup') {
+      return <LoginPage onLogin={handleLogin} onSignup={() => setCurrentPage('signup')} />;
+    }
+
+    switch (currentPage) {
+      case 'main':
+        return <MainPage user={user} />;
+      case 'login':
+        return <LoginPage onLogin={handleLogin} onSignup={() => setCurrentPage('signup')} />;
+      case 'signup':
+        return <SignupPage onLogin={handleLogin} onBack={() => setCurrentPage('login')} />;
+      case 'search':
+        return <CourseSearch />;
+      case 'recommendation':
+        return <CourseRecommendation />;
+      case 'graduation':
+        return <GraduationRequirements user={user} />;
+      case 'mypage':
+        return <MyPage user={user} />;
+      default:
+        return <MainPage user={user} />;
+    }
+  };
+
+  // 로그인/회원가입 페이지에서는 헤더 숨김
+  const showHeader = isLoggedIn || currentPage === 'main';
+
+  return (
+    <div className="min-h-screen bg-background">
+      {showHeader && (
+        <Header
+          user={user}
+          isLoggedIn={isLoggedIn}
+          onLogout={handleLogout}
+          onNavigate={setCurrentPage}
+          onLogin={() => setCurrentPage('login')}
+        />
+      )}
+      {renderPage()}
+    </div>
+  );
 }

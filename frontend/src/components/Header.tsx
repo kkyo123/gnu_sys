@@ -1,55 +1,90 @@
-import React from "react";
-import { GraduationCap, Search, BookOpen, User, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom"; // ✅ 필요한 것만 남김
-
-
-
-import "./Header.css";
+import React from 'react';
+import { Search, BookOpen, GraduationCap, User, LogOut, Bell } from 'lucide-react';
+import { Button } from './ui/button';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface HeaderProps {
-  user: { name: string; id?: number; email?: string } | null
+  user: any;
+  isLoggedIn: boolean;
   onLogout: () => void;
+  onNavigate: (page: string) => void;
+  onLogin: () => void;
 }
 
-export function Header({ user, onLogout }: HeaderProps) {
-  const isLoggedIn = !!user;
-  const navigate = useNavigate(); // useNavigate 훅
-
-  if (!isLoggedIn) return null; // 로그인 화면에서는 숨김
-
+export function Header({ user, isLoggedIn, onLogout, onNavigate, onLogin }: HeaderProps) {
   return (
-    <header className="header">
-      {/* 로고 */}
-      <div className="logo" onClick={()=>navigate("/")}>
-        <GraduationCap size={24} />
-        <span>UniCourse</span>
-      </div>
-
-      {/* 네비게이션 메뉴 */}
-      <nav className="nav-menu">
-        <Link to="/search" className="nav-link">
-          <Search size={16} /> 강의검색
-        </Link>
-        <Link to="/recommend" className="nav-link">
-          <BookOpen size={16} /> 강의추천
-        </Link>
-        <Link to="/graduation" className="nav-link">
-          <GraduationCap size={16} /> 졸업요건
-        </Link>
-        <Link to="/mypage" className="nav-link">
-          <User size={16} /> 마이페이지
-        </Link>
-      </nav>
-
-      {/* 유저 정보 */}
-      <div className="user-info">
-        <span>{user?.name || "학생"}</span>
-        <button onClick={onLogout} className="logout-btn">
-          <LogOut size={16} /> 로그아웃
-        </button>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* 로고 */}
+        <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onNavigate('main')}>
+          <GraduationCap className="h-8 w-8 text-primary" />
+          <span className="text-xl">UniCourse</span>
+        </div>
+        
+        {/* 네비게이션 메뉴 */}
+        {isLoggedIn && (
+          <nav className="hidden md:flex items-center space-x-1">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => onNavigate('search')}
+              className="flex items-center space-x-2"
+            >
+              <Search className="h-4 w-4" />
+              <span>강의검색</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => onNavigate('recommendation')}
+              className="flex items-center space-x-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>강의추천</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => onNavigate('graduation')}
+              className="flex items-center space-x-2"
+            >
+              <GraduationCap className="h-4 w-4" />
+              <span>졸업요건</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => onNavigate('mypage')}
+              className="flex items-center space-x-2"
+            >
+              <User className="h-4 w-4" />
+              <span>마이페이지</span>
+            </Button>
+          </nav>
+        )}
+        
+        {/* 유저 정보 */}
+        {isLoggedIn ? (
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" className="hidden sm:flex">
+              <Bell className="h-4 w-4" />
+            </Button>
+            <div className="hidden sm:flex items-center space-x-2">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <span className="hidden lg:inline">{user?.name || '학생'}</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onLogout}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={onLogin} variant="default">
+            로그인
+          </Button>
+        )}
       </div>
     </header>
   );
 }
-
-export default Header;

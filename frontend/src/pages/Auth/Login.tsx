@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, GraduationCap } from "lucide-react";
-import "./login.css"; // CSS는 별도 파일로 분리 가능
+import "./login.css";
 
 interface LoginPageProps {
-  onLogin: (userData: any) => void;  // 로그인 성공 후 App에 전달
-  onSignup?: () => void;              // 회원가입 버튼 클릭 시
+  onLogin: (userData: any) => void;
+  onSignup?: () => void;
 }
 
 function Login({ onLogin, onSignup }: LoginPageProps) {
@@ -17,21 +17,10 @@ function Login({ onLogin, onSignup }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // 로그인 시뮬레이션
     setTimeout(() => {
-      const userData = {
-        id: 1,
-        name: "김대학",
-        email: email,
-        major: "컴퓨터과학과",
-        studentId: "2021123456",
-        semester: 6,
-        gpa: 3.8,
-      };
-      onLogin(userData); // ✅ App으로 전달
+      onLogin({ id: 1, name: "홍길동", email, rememberMe });
       setIsLoading(false);
-    }, 1000);
+    }, 400);
   };
 
   return (
@@ -40,7 +29,7 @@ function Login({ onLogin, onSignup }: LoginPageProps) {
         <div className="login-header">
           <GraduationCap className="login-icon" />
           <h1 className="login-title">UniCourse</h1>
-          <p className="login-subtitle">학생 포털에 로그인하세요</p>
+          <p className="login-subtitle">대학생 포털에 로그인하세요</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -94,16 +83,15 @@ function Login({ onLogin, onSignup }: LoginPageProps) {
 
         <div className="extra-actions">
           <p className="ask">
-            계정이 없으신가요?{' '}
+            계정이 없으신가요? {" "}
             <button type="button" className="link-btn" onClick={onSignup}>
-            회원가입
-          </button>
+              회원가입
+            </button>
           </p>
-          
         </div>
 
         <footer className="login-footer">
-          <p>UniCourse는 대학생들의 학업 관리를 돕습니다</p>
+          <p>UniCourse는 대학생의 수업 관리를 돕습니다</p>
           <p>© 2024 UniCourse. All rights reserved.</p>
         </footer>
       </div>
@@ -111,5 +99,5 @@ function Login({ onLogin, onSignup }: LoginPageProps) {
   );
 }
 
-// ✅ default export
 export default Login;
+

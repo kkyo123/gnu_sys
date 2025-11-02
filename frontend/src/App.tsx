@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom"; 
  
 import Home from "./pages/Home"; 
-import Search from "./pages/Search"; 
-import Recommend from "./pages/Recommend"; 
-import Graduation from "./pages/Graduation"; 
+import Search from "./pages/Search/Search"; 
+import Recommend from "./pages/Search/Recommend"; 
+import Graduation from "./pages/Search/Graduation"; 
 import Mypage from "./pages/Mypage"; 
-import Login from "./pages/Login"; 
-import Signup from "./pages/Signup"; 
+import Login from "./pages/Auth/Login"; 
+import Signup from "./pages/Auth/Signup"; 
 import Header from "./components/Header"; 
-import Dashboard from "./pages/Dashboard"; 
+import Dashboard from "./pages/Dashboard/Dashboard"; 
 
 // ── User 타입 정의 ───────────────────────────────────────────
 interface User { 

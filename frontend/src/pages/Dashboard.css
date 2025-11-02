@@ -16,11 +16,7 @@ body {
   height: 100%;
 }
 
-.container {
-  min-height: 100vh;
-  background-color: #f5f5f7;
-  padding: 0;
-}
+
 
 .header {
   margin-bottom: 20px;
@@ -40,17 +36,23 @@ h1 {
 
 .main-content {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 50px;
+  grid-template-columns: 1fr;  /* grid-cols-1 */
+  gap: 1.5rem;  /* gap-6 = 24px */
   padding: 0 80px 40px;
-  max-width: 1500px;
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+/* lg (1024px) 이상일 때 2열로 */
+@media (min-width: 1024px) {
+  .main-content {
+    grid-template-columns: repeat(2, 1fr);  /* lg:grid-cols-2 */
+  }
 }
 
 .card {
   background-color: white;
   border-radius: 12px;
-  padding: 24px;
   border: 1px solid #e5e5e5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }

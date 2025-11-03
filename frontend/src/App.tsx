@@ -3,9 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { Header } from './components/Header';
 
 // Route targets from pages directory
-import Home from './pages/Home';
 import { LoginPage } from './pages/Auth/LoginPage';
-import Signup from './pages/Auth/Signup';
+import { SignupPage } from './pages/Auth/SignupPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Search from './pages/Search/Search';
 import Recommend from './pages/Search/Recommend';
@@ -70,7 +69,16 @@ function AppInner({
         />
       )}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? (
+              <Dashboard userData={user} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route
           path="/login"
           element={
@@ -83,9 +91,20 @@ function AppInner({
             />
           }
         />
-        <Route path="/signup" element={<Signup onBack={() => navigate('/login')} />} />
+        <Route
+          path="/signup"
+          element={
+            <SignupPage
+              onLogin={(u: User) => {
+                onLogin(u);
+                navigate('/');
+              }}
+              onBack={() => navigate('/login')}
+            />
+          }
+        />
 
-        <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard" element={isLoggedIn ? <Dashboard userData={user} /> : <Navigate to="/login" replace />} />
         <Route path="/search" element={isLoggedIn ? <Search /> : <Navigate to="/login" replace />} />
         <Route path="/recommendation" element={isLoggedIn ? <Recommend /> : <Navigate to="/login" replace />} />
         <Route path="/graduation" element={isLoggedIn ? <Graduation /> : <Navigate to="/login" replace />} />

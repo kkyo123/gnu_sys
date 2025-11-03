@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from datetime import datetime
 from database import connection
-from routers.auth import get_current_user  # 토큰 인증 재사용
+from routers.auth import get_current_user
 
 router = APIRouter(tags=["Users"])
 
@@ -20,7 +20,6 @@ async def get_me(user = Depends(get_current_user)):
     db = connection.get_db()
     prof = await db.profiles.find_one({"student_id": user["student_id"]}, projection={"_id": 0})
     if not prof:
-        # 없으면 기본 생성
         prof = {"student_id": user["student_id"], "nickname": user.get("name"), "bio": ""}
         await db.profiles.insert_one(prof | {"updated_at": datetime.utcnow().isoformat() + "Z"})
     return ProfilePublic(**prof)

@@ -15,7 +15,7 @@ const Mypage = () => {
         {/* 대시보드로 이동하는 버튼 */}
         <Button 
           label="/home 으로 이동" 
-          onClick={() => navigate("/home")} 
+          onClick={() => navigate("/")} 
         />
       </main>
 

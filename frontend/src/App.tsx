@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 
 // Route targets from pages directory
 import Home from './pages/Home';
-import Login from './pages/Auth/Login';
+import { LoginPage } from './pages/Auth/LoginPage';
 import Signup from './pages/Auth/Signup';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Search from './pages/Search/Search';
@@ -74,7 +74,7 @@ function AppInner({
         <Route
           path="/login"
           element={
-            <Login
+            <LoginPage
               onLogin={(u: User) => {
                 onLogin(u);
                 navigate('/');
@@ -117,4 +117,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-

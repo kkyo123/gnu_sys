@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -10,7 +11,11 @@ import os
 router = APIRouter(tags=["Auth"])
 
 # ====== Config & Security ======
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_ctx = CryptContext(
+    schemes=["bcrypt_sha256"],  
+    default="bcrypt_sha256",
+    deprecated="auto",
+)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
@@ -22,7 +27,7 @@ class UserCreate(BaseModel):
     student_id: str
     email: EmailStr
     name: str
-    password: str
+    password: str =  Field(min_length=8, max_length=128) # 최소/최대 길이정함
 
 class LoginRequest(BaseModel):
     identifier: str      # 학번 또는 이메일
@@ -38,6 +43,7 @@ def make_password_hash(raw: str) -> str:
 
 def verify_password(raw: str, hashed: str) -> bool:
     return pwd_ctx.verify(raw, hashed)
+
 
 def create_access_token(sub: str) -> str:
     now = datetime.utcnow()

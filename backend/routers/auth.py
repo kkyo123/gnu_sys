@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -10,7 +11,11 @@ import os
 router = APIRouter(tags=["Auth"])
 
 # ====== Config & Security ======
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_ctx = CryptContext(
+    schemes=["bcrypt_sha256"],  
+    default="bcrypt_sha256",
+    deprecated="auto",
+)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
@@ -22,7 +27,7 @@ class UserCreate(BaseModel):
     student_id: str
     email: EmailStr
     name: str
-    password: str
+    password: str =  Field(min_length=8, max_length=128) # 최소/최대 길이정함
 
 class LoginRequest(BaseModel):
     identifier: str      # 학번 또는 이메일
@@ -38,6 +43,7 @@ def make_password_hash(raw: str) -> str:
 
 def verify_password(raw: str, hashed: str) -> bool:
     return pwd_ctx.verify(raw, hashed)
+
 
 def create_access_token(sub: str) -> str:
     now = datetime.utcnow()
@@ -62,10 +68,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid token payload")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-
+    
+    sub_str = str(sub)
+    
     db = connection.get_db()
     user = await db.users.find_one(
-        {"student_id": sub},
+        {"student_id": sub_str},
         projection={"_id": 0, "password_hash": 0}
     )
     if not user:
@@ -87,7 +95,7 @@ async def register(payload: UserCreate):
         raise HTTPException(status_code=409, detail="User already exists")
 
     doc = {
-        "student_id": payload.student_id,
+        "student_id": str(payload.student_id),
         "email": payload.email,
         "name": payload.name,
         "password_hash": make_password_hash(payload.password),

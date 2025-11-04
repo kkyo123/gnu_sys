@@ -5,7 +5,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
-import { register, login, me } from '../../lib/api/auth';
+import { register } from '../../lib/api/auth';
+import { useNavigate } from 'react-router-dom';
 
 interface SignupPageProps {
   onLogin: (userData: any) => void;
@@ -13,6 +14,7 @@ interface SignupPageProps {
 }
 
 export function SignupPage({ onLogin, onBack }: SignupPageProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,17 +51,8 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
         name: formData.name,
         password: formData.password,
       });
-      const token = await login(formData.email, formData.password);
-      if ((import.meta as any).env?.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug('[signup] token:', token?.access_token?.slice(0, 24) + '...');
-      }
-      const profile = await me(token.access_token);
-      if ((import.meta as any).env?.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug('[signup] /auth/me:', profile);
-      }
-      onLogin(profile);
+      // 회원가입 완료 페이지로 이동
+      navigate('/signup/success');
     } catch (err: any) {
       setError(err?.message || '회원가입 처리 중 오류가 발생했습니다.');
     } finally {
@@ -208,4 +201,3 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
     </div>
   );
 }
-

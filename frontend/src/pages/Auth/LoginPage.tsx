@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
+import { login, me } from '../../lib/api/auth';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
@@ -12,30 +13,26 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // 데모용 로그인 처리
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        name: '김학생',
-        email: email,
-        major: '컴퓨터공학과',
-        studentId: '2021123456',
-        semester: 6,
-        gpa: 3.8,
-        rememberMe,
-      };
-      onLogin(userData);
+    setError(null);
+    try {
+      const token = await login(identifier, password);
+      const profile = await me(token.access_token);
+      onLogin(profile);
+    } catch (err: any) {
+      setError(err?.message || '로그인에 실패했습니다');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -57,13 +54,13 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">이메일 또는 학번</Label>
+                <Label htmlFor="id">이메일 또는 학번</Label>
                 <Input
-                  id="email"
+                  id="id"
                   type="text"
                   placeholder="student@university.ac.kr 또는 2024123456"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>
@@ -86,11 +83,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -100,6 +93,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
                 <Label htmlFor="remember" className="text-sm">로그인 상태 유지</Label>
               </div>
 
+              {error && <div className="text-sm text-red-600">{error}</div>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? '로그인 중...' : '로그인'}
               </Button>
@@ -118,11 +112,8 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
                   계정이 없으신가요?{' '}
-                  <Button variant="link" className="p-0 h-auto" onClick={onSignup}>
-                    회원가입
-                  </Button>
+                  <Button variant="link" className="p-0 h-auto" onClick={onSignup}>회원가입</Button>
                 </p>
-                <Button variant="link" className="p-0 h-auto text-sm">비밀번호를 잊으셨나요?</Button>
               </div>
             </div>
           </CardContent>

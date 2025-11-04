@@ -1,45 +1,17 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import Button from "../components/Button";
-import LectureCard from "../components/lectureCard"; // 추가
+﻿import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-const Home = () => {
+const Home: React.FC = () => {
   const navigate = useNavigate();
-
-    // 샘플 강의 데이터
-  const sampleCourse = {
-    course_name: "운영체제",
-    course_code: "CSE301",
-    professor: "이교수",
-    group: "전공",
-    category: "전공필수",
-    major_track: "컴퓨터 과학",
-    year: 2025,
-    설명란: "프로세스, 메모리, 파일시스템, 스케줄링 등 운영체제의 핵심 개념을 학습한다.",
-    비고: "3학점 | 실습 포함",
-    source_collection: "courses_2025_major_sci",
-  };
-
   return (
-    <div>
-      <main style={{ padding: "16px" }}>
-        
-        {/* LectureCard 추가 */}
-        <div style={{ marginTop: "24px" }}>
-          <h3 style={{ fontWeight: 600, marginBottom: "12px" }}>강의 카드 미리보기</h3>
-          <LectureCard
-            course={sampleCourse}
-            highlight={["운영체제", "이교수"]}
-            onClick={() => alert("LectureCard 클릭!")}
-            actions={<button>⭐</button>}
-          />
-        </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">UniCourse</h1>
+      <p className="text-muted-foreground mt-2">대학 강의 추천/검색 포털</p>
 
-        {/* 버튼들 */}
-        <Button label="클릭" onClick={() => alert("버튼 클릭!")} />
-        <Button label="대시보드로 이동" onClick={() => navigate("/dashboard")} />
-
-      </main>
+      <div className="mt-6 flex gap-3">
+        <button className="px-4 py-2 rounded bg-primary text-white" onClick={() => navigate("/login")}>로그인</button>
+        <Link to="/signup" className="px-4 py-2 rounded border">회원가입</Link>
+      </div>
     </div>
   );
 };

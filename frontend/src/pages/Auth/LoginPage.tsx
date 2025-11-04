@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Checkbox } from './ui/checkbox';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Checkbox } from '../../components/ui/checkbox';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
@@ -21,21 +21,21 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // 시뮬레이션된 로그인 처리
+    // 데모용 로그인 처리
     setTimeout(() => {
       const userData = {
         id: 1,
-        name: '김대학',
+        name: '김학생',
         email: email,
-        major: '컴퓨터과학과',
+        major: '컴퓨터공학과',
         studentId: '2021123456',
         semester: 6,
-        gpa: 3.8
+        gpa: 3.8,
+        rememberMe,
       };
       onLogin(userData);
       setIsLoading(false);
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -52,7 +52,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
         <Card>
           <CardHeader>
             <CardTitle>로그인</CardTitle>
-            <CardDescription>계정 정보를 입력해주세요</CardDescription>
+            <CardDescription>계정 정보를 입력해 주세요</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,7 +67,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">비밀번호</Label>
                 <div className="relative">
@@ -96,11 +96,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
+                <Checkbox id="remember" checked={rememberMe} onCheckedChange={(v) => setRememberMe(Boolean(v))} />
                 <Label htmlFor="remember" className="text-sm">로그인 상태 유지</Label>
               </div>
 
@@ -126,19 +122,18 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
                     회원가입
                   </Button>
                 </p>
-                <Button variant="link" className="p-0 h-auto text-sm">
-                  비밀번호를 잊으셨나요?
-                </Button>
+                <Button variant="link" className="p-0 h-auto text-sm">비밀번호를 잊으셨나요?</Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>UniCourse는 대학생들의 학업 관리를 돕습니다</p>
+          <p>UniCourse는 학생들의 수업 관리를 돕습니다</p>
           <p className="mt-1">© 2024 UniCourse. All rights reserved.</p>
         </div>
       </div>
     </div>
   );
 }
+

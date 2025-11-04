@@ -1,57 +1,61 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './components/Header';
-import { MainPage } from './components/MainPage';
-import { LoginPage } from './components/LoginPage';
-import { SignupPage } from './components/SignupPage';
-import { CourseSearch } from './components/CourseSearch';
-import { CourseRecommendation } from './components/CourseRecommendation';
-import { GraduationRequirements } from './components/GraduationRequirements';
-import { MyPage } from './components/MyPage';
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('main');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+// Route targets from pages directory
+import { LoginPage } from './pages/Auth/LoginPage';
+import { SignupPage } from './pages/Auth/SignupPage';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Search from './pages/Search/Search';
+import Recommend from './pages/Search/Recommend';
+import Graduation from './pages/Search/Graduation';
+import Mypage from './pages/Mypage';
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    setIsLoggedIn(true);
-    setCurrentPage('main');
-  };
+type User = any;
 
-  const handleLogout = () => {
-    setUser(null);
-    setIsLoggedIn(false);
-    setCurrentPage('main');
-  };
+function AppInner({
+  user,
+  isLoggedIn,
+  onLogin,
+  onLogout,
+}: {
+  user: User | null;
+  isLoggedIn: boolean;
+  onLogin: (u: User) => void;
+  onLogout: () => void;
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const renderPage = () => {
-    if (!isLoggedIn && currentPage !== 'signup') {
-      return <LoginPage onLogin={handleLogin} onSignup={() => setCurrentPage('signup')} />;
-    }
-
-    switch (currentPage) {
+  const onNavigate = (page: string) => {
+    switch (page) {
       case 'main':
-        return <MainPage user={user} />;
+        navigate('/');
+        break;
       case 'login':
-        return <LoginPage onLogin={handleLogin} onSignup={() => setCurrentPage('signup')} />;
+        navigate('/login');
+        break;
       case 'signup':
-        return <SignupPage onLogin={handleLogin} onBack={() => setCurrentPage('login')} />;
+        navigate('/signup');
+        break;
       case 'search':
-        return <CourseSearch />;
+        navigate('/search');
+        break;
       case 'recommendation':
-        return <CourseRecommendation />;
+        navigate('/recommendation');
+        break;
       case 'graduation':
-        return <GraduationRequirements user={user} />;
+        navigate('/graduation');
+        break;
       case 'mypage':
-        return <MyPage user={user} />;
+        navigate('/mypage');
+        break;
       default:
-        return <MainPage user={user} />;
+        navigate('/');
     }
   };
 
-  // 로그인/회원가입 페이지에서는 헤더 숨김
-  const showHeader = isLoggedIn || currentPage === 'main';
+  const showHeader = isLoggedIn || location.pathname === '/';
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,12 +63,76 @@ export default function App() {
         <Header
           user={user}
           isLoggedIn={isLoggedIn}
-          onLogout={handleLogout}
-          onNavigate={setCurrentPage}
-          onLogin={() => setCurrentPage('login')}
+          onLogout={onLogout}
+          onNavigate={onNavigate}
+          onLogin={() => navigate('/login')}
         />
       )}
-      {renderPage()}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? (
+              <Dashboard userData={user} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              onLogin={(u: User) => {
+                onLogin(u);
+                navigate('/');
+              }}
+              onSignup={() => navigate('/signup')}
+            />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <SignupPage
+              onLogin={(u: User) => {
+                onLogin(u);
+                navigate('/');
+              }}
+              onBack={() => navigate('/login')}
+            />
+          }
+        />
+
+        <Route path="/dashboard" element={isLoggedIn ? <Dashboard userData={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/search" element={isLoggedIn ? <Search /> : <Navigate to="/login" replace />} />
+        <Route path="/recommendation" element={isLoggedIn ? <Recommend /> : <Navigate to="/login" replace />} />
+        <Route path="/graduation" element={isLoggedIn ? <Graduation /> : <Navigate to="/login" replace />} />
+        <Route path="/mypage" element={isLoggedIn ? <Mypage /> : <Navigate to="/login" replace />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
+  );
+}
+
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsLoggedIn(false);
+  };
+
+  return (
+    <BrowserRouter>
+      <AppInner user={user} isLoggedIn={isLoggedIn} onLogin={handleLogin} onLogout={handleLogout} />
+    </BrowserRouter>
   );
 }

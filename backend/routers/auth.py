@@ -80,7 +80,25 @@ async def get_user_by_identifier(identifier: str):
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+        # Log unverified claims to help debug exp/iat vs server time
+        try:
+            claims = jwt.get_unverified_claims(token)
+            logger.info(
+                "/auth/me claims iat=%s exp=%s now=%s",
+                claims.get("iat"),
+                claims.get("exp"),
+                int(datetime.utcnow().timestamp()),
+            )
+        except Exception:
+            pass
+
+        # Add small leeway to avoid immediate expiry from minor clock skew
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALG],
+            options={"verify_aud": False, "leeway": 10},
+        )
         sub = payload.get("sub")
         if not sub:
             raise HTTPException(status_code=401, detail="Invalid token payload")

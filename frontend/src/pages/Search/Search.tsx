@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search as SearchIcon, Filter, Clock, MapPin, User, Star, BookOpen, Users, FileText, Award } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -9,6 +9,7 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { Label } from '../../components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { Separator } from '../../components/ui/separator';
+import { listCourses, type CourseOut } from '../../lib/api/courses';
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,85 +37,53 @@ export default function Search() {
   const days = ['전체', '월', '화', '수', '목', '금'];
   const times = ['전체', '1교시(09:00-10:30)', '2교시(10:30-12:00)', '3교시(13:00-14:30)', '4교시(14:30-16:00)', '5교시(16:00-17:30)'];
 
-  const courses = [
-    {
-      id: 1,
-      name: '자료구조',
-      professor: '김교수',
-      department: '컴퓨터과학과',
-      credits: 3,
-      time: '화목 10:30-12:00',
-      location: '공학관 305',
-      capacity: 40,
-      enrolled: 35,
-      rating: 4.2,
-      type: '전공필수',
-      description: '기본적인 자료구조와 알고리즘을 학습합니다.'
-    },
-    {
-      id: 2,
-      name: '컴퓨터과학개론',
-      professor: '이교수',
-      department: '컴퓨터과학과',
-      credits: 3,
-      time: '월수 9:00-10:30',
-      location: '공학관 201',
-      capacity: 50,
-      enrolled: 45,
-      rating: 4.5,
-      type: '전공기초',
-      description: '컴퓨터과학의 전반적인 개념을 소개합니다.'
-    },
-    {
-      id: 3,
-      name: '선형대수학',
-      professor: '박교수',
-      department: '수학과',
-      credits: 3,
-      time: '화목 14:00-15:30',
-      location: '수학관 102',
-      capacity: 30,
-      enrolled: 28,
-      rating: 3.8,
-      type: '교양필수',
-      description: '벡터와 행렬의 기본 개념을 학습합니다.'
-    },
-    {
-      id: 4,
-      name: '영어회화',
-      professor: 'Smith',
-      department: '영어영문학과',
-      credits: 2,
-      time: '월수금 15:00-16:00',
-      location: '인문관 203',
-      capacity: 25,
-      enrolled: 20,
-      rating: 4.7,
-      type: '교양선택',
-      description: '실용적인 영어 회화를 연습합니다.'
-    },
-    {
-      id: 5,
-      name: '데이터베이스',
-      professor: '정교수',
-      department: '컴퓨터과학과',
-      credits: 3,
-      time: '화목 16:00-17:30',
-      location: '공학관 401',
-      capacity: 35,
-      enrolled: 30,
-      rating: 4.1,
-      type: '전공선택',
-      description: '데이터베이스 설계와 관리를 학습합니다.'
-    }
-  ];
+  const [apiCourses, setApiCourses] = useState<CourseOut[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         course.professor.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDepartment = !selectedDepartment || selectedDepartment === '전체' || course.department === selectedDepartment;
-    return matchesSearch && matchesDepartment;
-  });
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await listCourses({ q: searchQuery, limit: 50 });
+        if (active) setApiCourses(data || []);
+      } catch (e: any) {
+        if (active) setError(e?.message || '검색 중 오류가 발생했습니다');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [searchQuery]);
+
+  const normalized = useMemo(() => {
+    return apiCourses.map((c) => ({
+      id: c.course_code || c.course_name || Math.random().toString(36).slice(2),
+      name: (c as any).name || c.course_name || '미정',
+      professor: c.professor || '미정',
+      department: c.group || c.general_type || c.category || '-',
+      credits: (c as any).credits || (c as any).credit || undefined,
+      time: (c as any).time || '-',
+      location: (c as any).location || '-',
+      capacity: (c as any).capacity,
+      enrolled: (c as any).enrolled,
+      rating: (c as any).rating || undefined,
+      type: c.category || c.general_type || c.group || '-',
+      description: (c as any).description || '-',
+      raw: c,
+    }));
+  }, [apiCourses]);
+
+  const filteredCourses = useMemo(() => {
+    return normalized.filter((course) => {
+      const matchesDepartment = !selectedDepartment || selectedDepartment === '전체' || course.department === selectedDepartment;
+      return matchesDepartment;
+    });
+  }, [normalized, selectedDepartment]);
 
   const handleFilterChange = (filter: string, checked: boolean) => {
     setSelectedFilters(prev => ({ ...prev, [filter]: checked }));
@@ -257,38 +226,46 @@ export default function Search() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground">총 {filteredCourses.length}개의 강의를 찾았습니다</p>
-          <Select defaultValue="rating">
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">평점순</SelectItem>
-              <SelectItem value="name">이름순</SelectItem>
-              <SelectItem value="professor">교수순</SelectItem>
-              <SelectItem value="capacity">여석순</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <Select defaultValue="rating">
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rating">평점순</SelectItem>
+                <SelectItem value="name">이름순</SelectItem>
+                <SelectItem value="professor">교수순</SelectItem>
+                <SelectItem value="capacity">여석순</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
         <div className="grid gap-4">
-          {filteredCourses.map((course) => (
+          {loading && (
+            <Card><CardContent className="pt-6">불러오는 중...</CardContent></Card>
+          )}
+          {error && !loading && (
+            <Card><CardContent className="pt-6 text-red-600">{error}</CardContent></Card>
+          )}
+          {!loading && !error && filteredCourses.map((course) => (
             <Card key={course.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <h3>{course.name}</h3>
-                      <Badge variant="secondary">{course.type}</Badge>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-sm">{course.rating}</span>
-                      </div>
+                      {course.type && <Badge variant="secondary">{course.type}</Badge>}
+                      {course.rating && (
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                          <span className="text-sm">{course.rating}</span>
+                        </div>
+                      )}
                     </div>
                     <p className="text-muted-foreground text-sm mb-3">{course.description}</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.professor} • {course.credits}학점</span>
+                        <span>{course.professor}{course.credits ? ` • ${course.credits}학점` : ''}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -468,4 +445,3 @@ export default function Search() {
     </main>
   );
 }
-

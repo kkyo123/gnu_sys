@@ -4,8 +4,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Checkbox } from '../../components/ui/checkbox';
+import { register, login, me } from '../../lib/api/auth';
 
 interface SignupPageProps {
   onLogin: (userData: any) => void;
@@ -16,24 +16,15 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    studentId: '',
     password: '',
     confirmPassword: '',
-    studentId: '',
-    major: '',
-    semester: '',
-    phone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const majors = [
-    '컴퓨터과학과', '전자공학과', '기계공학과', '화학공학과', '산업공학과',
-    '경영학과', '경제학과', '심리학과', '영어영문학과', '수학과'
-  ];
-
-  const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -41,29 +32,39 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!agreeTerms) {
-      alert('이용약관에 동의해주세요.');
+      setError('이용약관에 동의해주세요.');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
+      setError('비밀번호가 일치하지 않습니다.');
       return;
     }
-
-    setIsLoading(true);
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        name: formData.name,
+    try {
+      setIsLoading(true);
+      await register({
+        student_id: formData.studentId,
         email: formData.email,
-        major: formData.major,
-        studentId: formData.studentId,
-        semester: parseInt(formData.semester || '0', 10),
-        gpa: 0.0,
-      };
-      onLogin(userData);
+        name: formData.name,
+        password: formData.password,
+      });
+      const token = await login(formData.email, formData.password);
+      if ((import.meta as any).env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug('[signup] token:', token?.access_token?.slice(0, 24) + '...');
+      }
+      const profile = await me(token.access_token);
+      if ((import.meta as any).env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug('[signup] /auth/me:', profile);
+      }
+      onLogin(profile);
+    } catch (err: any) {
+      setError(err?.message || '회원가입 처리 중 오류가 발생했습니다.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -85,7 +86,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
               </Button>
               <div>
                 <CardTitle>회원가입</CardTitle>
-                <CardDescription>학생 정보를 입력해주세요</CardDescription>
+                <CardDescription>학생 정보를 입력해 주세요</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -126,50 +127,6 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="major">전공</Label>
-                  <Select value={formData.major} onValueChange={(value) => handleInputChange('major', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="전공 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {majors.map((major) => (
-                        <SelectItem key={major} value={major}>
-                          {major}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="semester">학기</Label>
-                  <Select value={formData.semester} onValueChange={(value) => handleInputChange('semester', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="학기" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {semesters.map((semester) => (
-                        <SelectItem key={semester} value={semester}>
-                          {semester}학기
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">연락처</Label>
-                <Input
-                  id="phone"
-                  placeholder="010-1234-5678"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  required
-                />
-              </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="password">비밀번호</Label>
                 <div className="relative">
@@ -230,11 +187,10 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   checked={agreeTerms}
                   onCheckedChange={(checked) => setAgreeTerms(!!checked)}
                 />
-                <Label htmlFor="terms" className="text-sm">
-                  이용약관 및 개인정보처리방침에 동의합니다
-                </Label>
+                <Label htmlFor="terms" className="text-sm">이용약관 및 개인정보처리방침에 동의합니다</Label>
               </div>
 
+              {error && <div className="text-sm text-red-600">{error}</div>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? '가입 중...' : '회원가입'}
               </Button>
@@ -243,9 +199,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 이미 계정이 있으신가요?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={onBack}>
-                  로그인
-                </Button>
+                <Button variant="link" className="p-0 h-auto" onClick={onBack}>로그인</Button>
               </p>
             </div>
           </CardContent>

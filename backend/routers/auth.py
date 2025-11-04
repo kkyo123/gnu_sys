@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr, Field
 from passlib.context import CryptContext
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 from passlib.context import CryptContext
@@ -64,11 +64,14 @@ def verify_password(raw: str, hashed: str) -> bool:
 
 
 def create_access_token(sub: str) -> str:
-    now = datetime.utcnow()
+    # Use timezone-aware UTC to avoid Windows naive timestamp bugs
+    now = datetime.now(timezone.utc)
+    iat = int(now.timestamp())
+    exp = iat + (JWT_EXPIRE_MINUTES * 60)
     payload = {
         "sub": sub,
-        "iat": int(now.timestamp()),
-        "exp": int((now + timedelta(minutes=JWT_EXPIRE_MINUTES)).timestamp()),
+        "iat": iat,
+        "exp": exp,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 

@@ -26,7 +26,15 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
     setError(null);
     try {
       const token = await login(identifier, password);
+      if ((import.meta as any).env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug('[auth] login token:', token?.access_token?.slice(0, 24) + '...');
+      }
       const profile = await me(token.access_token);
+      if ((import.meta as any).env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug('[auth] /auth/me profile:', profile);
+      }
       onLogin(profile);
     } catch (err: any) {
       setError(err?.message || '로그인에 실패했습니다');
@@ -120,7 +128,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
         </Card>
 
         <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>UniCourse는 학생들의 수업 관리를 돕습니다</p>
+          <p>UniCourse – 학생들의 학업 관리를 돕습니다</p>
           <p className="mt-1">© 2024 UniCourse. All rights reserved.</p>
         </div>
       </div>

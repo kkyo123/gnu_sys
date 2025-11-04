@@ -19,3 +19,16 @@ export async function me(token: string): Promise<any> {
   });
 }
 
+export type RegisterBody = {
+  student_id: string;
+  email: string;
+  name: string;
+  password: string;
+};
+
+export async function register(body: RegisterBody): Promise<{ message: string }> {
+  return request<{ message: string }>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}

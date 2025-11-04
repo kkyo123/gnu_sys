@@ -68,10 +68,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid token payload")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-
+    
+    sub_str = str(sub)
+    
     db = connection.get_db()
     user = await db.users.find_one(
-        {"student_id": sub},
+        {"student_id": sub_str},
         projection={"_id": 0, "password_hash": 0}
     )
     if not user:
@@ -93,7 +95,7 @@ async def register(payload: UserCreate):
         raise HTTPException(status_code=409, detail="User already exists")
 
     doc = {
-        "student_id": payload.student_id,
+        "student_id": str(payload.student_id),
         "email": payload.email,
         "name": payload.name,
         "password_hash": make_password_hash(payload.password),

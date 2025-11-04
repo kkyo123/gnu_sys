@@ -33,7 +33,7 @@ async def list_requirements(
 
     cursor = (
         db.requirements
-          .find(q, projection={"_id": 0})   # ✅ _id 제거
+          .find(q, projection={"_id": 0})   
           .skip(offset)
           .limit(limit)
           .sort("year", 1)                  # 선택: 정렬 기준 하나 두면 응답 안정적
@@ -43,7 +43,7 @@ async def list_requirements(
 
 @router.patch("/{requirement_id}", response_model=dict)
 async def update_requirement(requirement_id: str, payload: RequirementUpdate):
-    updates = payload.model_dump(exclude_unset=True)  # ✅ v2
+    updates = payload.model_dump(exclude_unset=True)  
     if not updates:
         return {"message": "No changes"}
 

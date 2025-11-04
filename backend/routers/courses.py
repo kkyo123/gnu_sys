@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Query
-from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, Query, HTTPException
+from typing import Any, Dict, List, Optional, Tuple
 import re
-from database.connection import get_db, get_course_collections, ensure_indexes
-from pydantic import BaseModel, Field
+from database.connection import get_db, get_course_collections
+from pydantic import BaseModel
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 
-router = APIRouter(tags=["courses"])
+router = APIRouter(tags=["Courses"])
+
+# --- Pydantic 모델 (응답) ------------------------------------------------------
 
 class CourseOut(BaseModel):
     requirement_id: Optional[str] = None
@@ -14,88 +17,219 @@ class CourseOut(BaseModel):
     professor: Optional[str] = None
     group: Optional[str] = None              # 전공/교양/일반선택/교직
     year: Optional[int] = None
-    major_track: Optional[str] = None        # 컴퓨터과학/컴퓨터소프트웨어/빅데이터
-    general_type: Optional[str] = None       # 핵심/균형/기초/일반선택·교직
+    major_track: Optional[str] = None        # 컴퓨터 과학/컴퓨터 소프트웨어/빅데이터
+    general_type: Optional[str] = None       # 핵심 교양/균형 교양/기초 교양/일반선택·교직
     source_collection: Optional[str] = None  # 어느 컬렉션에서 왔는지
     source_sheet: Optional[str] = None
     설명란: Optional[str] = None
     비고: Optional[str] = None
 
-# @router.on_event("startup")
-# async def _startup():
-#     await ensure_indexes()
+# --- 유틸: 컬렉션명으로 기본값 추론 --------------------------------------------
 
 def _defaults_from_collection(name: str) -> Dict[str, Any]:
-    # courses_2025_major, courses_2023_major_sci, core_general ...
+    """
+    예) courses_2025_major, courses_2023_major_sci, core_general ...
+    컬렉션명으로부터 year/group/major_track/general_type/source_collection 기본값 추론
+    """
     d: Dict[str, Any] = {"source_collection": name}
+
     if name.startswith("courses_") and "_major" in name:
         # year
         m = re.search(r"courses_(\d{4})_major", name)
         if m:
-            d["year"] = int(m.group(1))
+            try:
+                d["year"] = int(m.group(1))
+            except Exception:
+                pass
         d["group"] = "전공"
-        # track
+
+        # track suffix (선택)
         if name.endswith("_sci"):
             d["major_track"] = "컴퓨터 과학"
         elif name.endswith("_sw"):
             d["major_track"] = "컴퓨터 소프트웨어"
         elif name.endswith("_bd"):
             d["major_track"] = "빅데이터"
+
     elif name == "courses_NormalStudy":
         d["group"] = "일반선택/교직"
         d["general_type"] = "일반선택/교직"
+
     elif name == "core_general":
         d["group"] = "교양"
         d["general_type"] = "핵심 교양"
+
     elif name == "balance_general":
         d["group"] = "교양"
         d["general_type"] = "균형 교양"
+
     elif name == "basic_general":
         d["group"] = "교양"
         d["general_type"] = "기초 교양"
+
     return d
 
-def _inject_defaults_stage(defaults: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    필드가 없을 때만 컬렉션명에서 유도한 기본값을 주입한다.
-    year/group/major_track/general_type/source_collection 만 처리.
-    """
-    sets: Dict[str, Any] = {}
-    for k, v in defaults.items():
-        if k == "source_collection":
-            # 항상 기록
-            sets[k] = v
-        else:
-            sets[k] = {"$ifNull": [f"${k}", v]}
-    return {"$set": sets}
+# --- 유틸: 쿼리 빌더 -----------------------------------------------------------
 
-def _build_match(q: Optional[str], year: Optional[int], group: Optional[str],
-                 category: Optional[str], major_track: Optional[str],
-                 general_type: Optional[str]) -> Dict[str, Any]:
+def _build_match(
+    q: Optional[str],
+    year: Optional[int],
+    group: Optional[str],
+    category: Optional[str],
+    major_track: Optional[str],
+    general_type: Optional[str],
+) -> Dict[str, Any]:
     cond: Dict[str, Any] = {}
     if year is not None: cond["year"] = year
     if group: cond["group"] = group
     if category: cond["category"] = category
     if major_track: cond["major_track"] = major_track
     if general_type: cond["general_type"] = general_type
+
     if q:
         regex = {"$regex": q, "$options": "i"}
+        # 검색 범위 확장: requirement_id / 비고 포함
         cond["$or"] = [
             {"course_name": regex},
             {"professor": regex},
             {"course_code": regex},
             {"category": regex},
+            {"requirement_id": regex},
+            {"비고": regex},
         ]
     return cond
+
+# --- 유틸: 타입 캐스팅 + 기본값 주입 -------------------------------------------
+
+_STRING_KEYS = ("course_code", "requirement_id", "category", "course_name", "professor")
+
+def _coerce_and_fill(doc: Dict[str, Any], defaults: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    - 숫자/기타 타입으로 저장된 문자열 필드들을 str로 강제 캐스팅
+    - 컬렉션명에서 유도한 기본값들을 비어있을 때만 주입
+    """
+    if not doc:
+        return doc
+
+    # 문자열 강제 변환
+    for k in _STRING_KEYS:
+        if k in doc and doc[k] is not None and not isinstance(doc[k], str):
+            doc[k] = str(doc[k])
+
+    # 기본값 주입
+    if "source_collection" not in doc or doc.get("source_collection") is None:
+        if "source_collection" in defaults:
+            doc["source_collection"] = defaults["source_collection"]
+
+    for k in ("year", "group", "major_track", "general_type"):
+        if doc.get(k) is None and defaults.get(k) is not None:
+            doc[k] = defaults[k]
+
+    # _id 제거 (응답 모델과 일치)
+    doc.pop("_id", None)
+    return doc
+
+# --- 유틸: 단일 컬렉션 조회(find) -----------------------------------------------
+
+async def _fetch_from_collection(
+    col: AsyncIOMotorCollection,
+    defaults: Dict[str, Any],
+    match: Dict[str, Any],
+    skip: int,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """
+    Aggregate 없이 find()만 사용. Mongo 버전 독립.
+    """
+    cur = col.find(match, {
+        "_id": 0,  # 그래도 혹시 모르니 아래에서 한번 더 pop
+        "requirement_id": 1,
+        "category": 1,
+        "course_name": 1,
+        "course_code": 1,
+        "professor": 1,
+        "group": 1,
+        "year": 1,
+        "major_track": 1,
+        "general_type": 1,
+        "source_collection": 1,
+        "source_sheet": 1,
+        "설명란": 1,
+        "비고": 1,
+    }).skip(skip).limit(limit)
+
+    docs = await cur.to_list(length=limit)
+    return [_coerce_and_fill(d, defaults) for d in docs]
+
+# --- 유틸: 다수 컬렉션 union + 글로벌 skip/limit --------------------------------
+
+async def _fetch_union_collections(
+    db: AsyncIOMotorDatabase,
+    match: Dict[str, Any],
+    skip: int,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """
+    여러 컬렉션을 union 하되, Mongo 집계 사용 없이 파이썬에서 합침.
+    글로벌 페이지네이션(skip/limit) 보장.
+    """
+    result: List[Dict[str, Any]] = []
+    if limit <= 0:
+        return result
+
+    # connection.get_course_collections(): 애플리케이션 정책대로 수집
+    colls = await get_course_collections()
+    if not colls:
+        return result
+
+    remaining_to_skip = skip
+    remaining_to_take = limit
+
+    for col in colls:
+        defaults = _defaults_from_collection(col.name)
+
+        # 각 컬렉션에서 먼저 개수 확인(가벼운 count)
+        try:
+            count = await col.count_documents(match)
+        except Exception:
+            # count가 안 될 경우라도 그냥 넘어가서 find 시도
+            count = None
+
+        # 스킵 처리
+        local_skip = 0
+        if count is not None:
+            if remaining_to_skip >= count:
+                remaining_to_skip -= count
+                continue
+            else:
+                local_skip = remaining_to_skip
+                remaining_to_skip = 0
+        else:
+            # count 실패 시, local_skip은 remaining_to_skip로 추정
+            local_skip = remaining_to_skip
+            remaining_to_skip = 0
+
+        # 이 컬렉션에서 가져올 양
+        take_here = remaining_to_take
+        chunk = await _fetch_from_collection(col, defaults, match, skip=local_skip, limit=take_here)
+        result.extend(chunk)
+
+        remaining_to_take -= len(chunk)
+        if remaining_to_take <= 0:
+            break
+
+    return result
+
+# --- 엔드포인트: 목록 -----------------------------------------------------------
 
 @router.get("", response_model=List[CourseOut])
 async def list_courses(
     q: Optional[str] = None,
     year: Optional[int] = None,
-    group: Optional[str] = Query(None, description='전공/교양/일반선택/교직'),
+    group: Optional[str] = Query(None, description="전공/교양/일반선택/교직"),
     category: Optional[str] = None,                   # 전공필수/전공선택/핵심/균형/기초 등
-    major_track: Optional[str] = None,                # 컴퓨터과학/컴퓨터소프트웨어/빅데이터
-    general_type: Optional[str] = None,               # 핵심교양/균형교양/기초교양/일반선택·교직
+    major_track: Optional[str] = None,                # 컴퓨터 과학/컴퓨터 소프트웨어/빅데이터
+    general_type: Optional[str] = None,               # 핵심 교양/균형 교양/기초 교양/일반선택·교직
     limit: int = Query(20, ge=1, le=100),
     skip: int = Query(0, ge=0),
     collection: Optional[str] = Query(None, description="특정 컬렉션만"),
@@ -103,46 +237,29 @@ async def list_courses(
     db = get_db()
     match = _build_match(q, year, group, category, major_track, general_type)
 
+    # 특정 컬렉션만
     if collection:
+        if collection not in (await db.list_collection_names()):
+            # 컬렉션명이 잘못된 경우에도 200/빈배열로 줄 수 있지만,
+            # 디버깅 편의상 404가 더 명확할 수 있음. 여기선 빈 배열 반환으로 둠.
+            return []
         defaults = _defaults_from_collection(collection)
-        pipeline = [
-            _inject_defaults_stage(defaults),
-            {"$match": match},
-            {"$skip": skip},
-            {"$limit": limit},
-            {"$project": {"_id": 0}},
-        ]
-        docs = await db[collection].aggregate(pipeline).to_list(length=limit)
+        col = db[collection]
+        docs = await _fetch_from_collection(col, defaults, match, skip=skip, limit=limit)
         return docs
 
-    colls = await get_course_collections()
-    if not colls:
-        return []
+    # 여러 컬렉션 union
+    docs = await _fetch_union_collections(db, match, skip=skip, limit=limit)
 
-    # 첫 컬렉션 파이프라인
-    first = colls[0]
-    pipeline: List[Dict[str, Any]] = [
-        _inject_defaults_stage(_defaults_from_collection(first.name)),
-        {"$match": match},
-    ]
-    # unionWith
-    for other in colls[1:]:
-        pipeline.append({
-            "$unionWith": {
-                "coll": other.name,
-                "pipeline": [
-                    _inject_defaults_stage(_defaults_from_collection(other.name)),
-                    {"$match": match},
-                ],
-            }
-        })
-    pipeline += [
-        {"$skip": skip},
-        {"$limit": limit},
-        {"$project": {"_id": 0}},
-    ]
-    docs = await first.aggregate(pipeline).to_list(length=limit)
+    # (선택) 간단 정렬: requirement_id -> course_code
+    # 문자열 캐스팅이 끝났으므로 안전
+    def _key(d: Dict[str, Any]) -> Tuple[str, str]:
+        return (d.get("requirement_id") or "", d.get("course_code") or "")
+    docs.sort(key=_key)
+
     return docs
+
+# --- 엔드포인트: 개수 -----------------------------------------------------------
 
 @router.get("/count", response_model=int)
 async def count_courses(
@@ -157,35 +274,22 @@ async def count_courses(
     db = get_db()
     match = _build_match(q, year, group, category, major_track, general_type)
 
+    # 특정 컬렉션만
     if collection:
-        pipeline = [
-            _inject_defaults_stage(_defaults_from_collection(collection)),
-            {"$match": match},
-            {"$count": "n"},
-        ]
-        res = await db[collection].aggregate(pipeline).to_list(length=1)
-        return int(res[0]["n"]) if res else 0
+        if collection not in (await db.list_collection_names()):
+            return 0
+        try:
+            n = await db[collection].count_documents(match)
+            return int(n)
+        except Exception:
+            return 0
 
+    # union 모드: 모든 과목 컬렉션 합산
+    total = 0
     colls = await get_course_collections()
-    if not colls:
-        return 0
-
-    first = colls[0]
-    pipeline: List[Dict[str, Any]] = [
-        _inject_defaults_stage(_defaults_from_collection(first.name)),
-        {"$match": match},
-    ]
-    for other in colls[1:]:
-        pipeline.append({
-            "$unionWith": {
-                "coll": other.name,
-                "pipeline": [
-                    _inject_defaults_stage(_defaults_from_collection(other.name)),
-                    {"$match": match},
-                ],
-            }
-        })
-    pipeline.append({"$count": "n"})
-    res = await first.aggregate(pipeline).to_list(length=1)
-    return int(res[0]["n"]) if res else 0
-
+    for col in colls:
+        try:
+            total += int(await col.count_documents(match))
+        except Exception:
+            continue
+    return total

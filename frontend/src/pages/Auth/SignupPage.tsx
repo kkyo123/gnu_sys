@@ -36,6 +36,11 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    // 학번 형식 검증: 숫자 8~10자리
+    if (!/^\d{8,10}$/.test(formData.studentId)) {
+      setError('학번은 숫자 8~10자리여야 합니다.');
+      return;
+    }
     if (!agreeTerms) {
       setError('이용약관에 동의해 주세요.');
       return;
@@ -102,9 +107,15 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Label htmlFor="studentId">학번</Label>
                   <Input
                     id="studentId"
-                    placeholder="2023123456"
+                    placeholder="20231234"
                     value={formData.studentId}
-                    onChange={(e) => handleInputChange('studentId', e.target.value)}
+                    inputMode="numeric"
+                    pattern="\d{8,10}"
+                    maxLength={10}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      handleInputChange('studentId', v);
+                    }}
                     required
                   />
                 </div>
@@ -125,7 +136,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Label htmlFor="department">학과</Label>
                   <Input
                     id="department"
-                    placeholder="컴퓨터공학과"
+                    placeholder="컴퓨터과학과"
                     value={formData.department}
                     onChange={(e) => handleInputChange('department', e.target.value)}
                     required
@@ -188,8 +199,8 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="terms" 
+                <Checkbox
+                  id="terms"
                   checked={agreeTerms}
                   onCheckedChange={(checked) => setAgreeTerms(!!checked)}
                 />
@@ -214,3 +225,4 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr
 from passlib.context import CryptContext
 import unicodedata
 from datetime import datetime, timezone
@@ -32,7 +32,7 @@ JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
 
 # ====== Schemas ======
 class UserCreate(BaseModel):
-    student_id: str
+    student_id: constr(regex=r"^\d{8,10}$")
     username: str
     name: str
     password: str = Field(min_length=8, max_length=128)
@@ -167,4 +167,3 @@ async def login(body: LoginRequest):
 async def me(current = Depends(get_current_user)):
     logger.info("/auth/me student_id=%s", current.get("student_id"))
     return current
-

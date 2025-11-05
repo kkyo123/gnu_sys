@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search as SearchIcon, Filter, Clock, MapPin, User, Star, BookOpen, Users, FileText, Award } from 'lucide-react';
+import { Search as SearchIcon, Filter, Clock, User, Star, BookOpen, Users, FileText, Award } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -30,8 +30,8 @@ export default function Search() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const departments = [
-    '전체', '컴퓨터과학과', '전자공학과', '기계공학과', '화학공학과', 
-    '경영학과', '경제학과', '심리학과', '영어영문학과', '수학과'
+    '전체', '컴퓨터공학과', '전자공학과', '기계공학과', '화학공학과',
+    '경영학과', '경제학과', '물리학과', '산업운영공학과', '수학과'
   ];
 
   const days = ['전체', '월', '화', '수', '목', '금'];
@@ -45,35 +45,33 @@ export default function Search() {
     let active = true;
     (async () => {
       try {
-        setLoading(true); // 로딩 시작
-        setError(null); // 이전 오류 초기화
-        const data = await listCourses({ q: searchQuery, limit: 50 }); // 검색어에 따른 강의 목록 불러오기
-        if (active) setApiCourses(data || []); // 데이터 설정
-      } catch (e: any) { // 오류 처리
-        if (active) setError(e?.message || '검색 중 오류가 발생했습니다');  // 오류 메시지 설정
-      } finally { 
-        if (active) setLoading(false); // 로딩 종료
+        setLoading(true);
+        setError(null);
+        const data = await listCourses({ q: searchQuery, limit: 50 });
+        if (active) setApiCourses(data || []);
+      } catch (e: any) {
+        if (active) setError(e?.message || '검색 중 오류가 발생했습니다');
+      } finally {
+        if (active) setLoading(false);
       }
     })();
     return () => {
-      active = false; // 컴포넌트 언마운트 시 비활성화
+      active = false;
     };
-  }, [searchQuery]); // 검색어 변경 시마다 실행
-
+  }, [searchQuery]);
 
   const normalized = useMemo(() => {
     return apiCourses.map((c) => ({
-      id: c.course_code || c.course_name || Math.random().toString(36).slice(2),
+      id: (c as any).course_code || c.course_name || Math.random().toString(36).slice(2),
       name: (c as any).name || c.course_name || '미정',
       professor: c.professor || '미정',
-      department: c.group || c.general_type || c.category || '-',
-      credits: (c as any).credits || (c as any).credit || undefined,
-      time: (c as any).time || '-',
-      location: (c as any).location || '-',
+      department: (c as any).group || (c as any).general_type || c.category || '-',
+      credits: (c as any).credits ?? (c as any).credit ?? (c as any).credits ?? undefined,
+      timeslot: (c as any).timeslot ?? (c as any).time ?? '-',
       capacity: (c as any).capacity,
       enrolled: (c as any).enrolled,
       rating: (c as any).rating || undefined,
-      type: c.category || c.general_type || c.group || '-',
+      type: c.category || (c as any).general_type || (c as any).group || '-',
       description: (c as any).description || '-',
       raw: c,
     }));
@@ -97,26 +95,26 @@ export default function Search() {
 
   const getCourseDetails = (course: any) => {
     const keywordMap: { [key: number]: string[] } = {
-      1: ['알고리즘', '프로그래밍', '코딩', '문제해결', '데이터처리', '복잡도분석'],
-      2: ['입문', '기초', '프로그래밍', '컴퓨팅사고', '소프트웨어', '하드웨어'],
-      3: ['수학', '행렬', '벡터', '수치해석', '선형변환', '고유값'],
-      4: ['영어', '회화', '커뮤니케이션', '실용영어', '스피킹', '리스닝'],
-      5: ['SQL', '데이터관리', '백엔드', 'DBMS', '데이터모델링', '쿼리최적화']
+      1: ['자료구조', '프로그래밍', '코딩', '알고리즘', '메모리관리', '객체지향'],
+      2: ['통계', '확률', '프로그래밍', '컴퓨터구조', '소프트웨어', '네트워크'],
+      3: ['수학', '논리', '공학', '기계학습', '운영환경', '데이터'],
+      4: ['물리', '화학', '컴퓨팅', '인공지능', '분산시스템', '보안'],
+      5: ['SQL', '데이터모델링', '정규화', 'DBMS', '데이터처리', '정보화']
     };
 
     return {
       ...course,
-      prerequisites: course.id === 1 ? ['프로그래밍기초'] : course.id === 5 ? ['자료구조'] : [],
-      keywords: keywordMap[course.id] || ['기초', '학습', '이론', '실습'],
+      prerequisites: course.id === 1 ? ['프로그래밍입문'] : course.id === 5 ? ['자료구조'] : [],
+      keywords: keywordMap[course.id] || ['학습', '이론', '실습', '응용'],
       assessmentMethod: {
         midterm: 30,
         final: 30,
         assignment: 25,
         attendance: 15
       },
-      syllabus: `${course.name}의 강의계획서입니다.`,
+      syllabus: `${course.name}의 강의개요입니다.`,
       reviews: Math.floor(Math.random() * 50) + 20,
-      difficulty: course.rating > 4.5 ? '쉬움' : course.rating > 4.0 ? '보통' : '어려움'
+      difficulty: course.rating > 4.5 ? '어려움' : course.rating > 4.0 ? '보통' : '쉬움'
     };
   };
 
@@ -124,7 +122,7 @@ export default function Search() {
     <main className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <h1>강의 검색</h1>
-        <p className="text-muted-foreground mt-2">키워드와 필터로 원하는 강의를 찾아보세요</p>
+        <p className="text-muted-foreground mt-2">키워드로 원하는 강의를 찾아보세요</p>
       </div>
       <div className="space-y-4 mb-6">
         <div className="flex gap-4">
@@ -132,8 +130,8 @@ export default function Search() {
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="강의명, 교수명으로 검색하세요"
-              value={searchQuery} // 검색어 상태 바인딩
-              onChange={(e) => setSearchQuery(e.target.value)} // 입력 변경 시 상태 업데이트
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -186,9 +184,9 @@ export default function Search() {
                       <SelectValue placeholder="시간 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {times.map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
+                      {times.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -196,8 +194,8 @@ export default function Search() {
                 </div>
               </div>
 
-              <div className="mt-6">
-                <Label className="mb-3 block">강의 유형</Label>
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">분류</p>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {Object.entries(selectedFilters).map(([key, checked]) => (
                     <div key={key} className="flex items-center space-x-2">
@@ -234,8 +232,8 @@ export default function Search() {
               <SelectContent>
                 <SelectItem value="rating">평점순</SelectItem>
                 <SelectItem value="name">이름순</SelectItem>
-                <SelectItem value="professor">교수순</SelectItem>
-                <SelectItem value="capacity">여석순</SelectItem>
+                <SelectItem value="professor">교수명순</SelectItem>
+                <SelectItem value="capacity">수용인원순</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -245,10 +243,9 @@ export default function Search() {
             <Card><CardContent className="pt-6">불러오는 중...</CardContent></Card>
           )}
           {error && !loading && (
-            <Card><CardContent className="pt-6 text-red-600">{error}</CardContent></Card> // 오류 메시지 표시
+            <Card><CardContent className="pt-6 text-red-600">{error}</CardContent></Card>
           )}
-          {/* --- 강의 카드 렌더링 --- */}
-          {!loading && !error && filteredCourses.map((course) => ( 
+          {!loading && !error && filteredCourses.map((course) => (
             <Card key={course.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -256,26 +253,23 @@ export default function Search() {
                     <div className="flex items-center space-x-2 mb-2">
                       <h3>{course.name}</h3>
                       {course.type && <Badge variant="secondary">{course.type}</Badge>}
-                      {course.rating && (
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm">{course.rating}</span>
-                        </div>
+                      {course.raw?.course_code && (
+                        <span className="text-xs text-muted-foreground">· {course.raw.course_code}</span>
                       )}
                     </div>
-                    <p className="text-muted-foreground text-sm mb-3">{course.description}</p>
+                    <p className="text-muted-foreground text-sm mb-3">강의설명</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <span>{course.credits ? (course.credits + '학점') : 'n학점'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.professor}{course.credits ? ` • ${course.credits}학점` : ''}</span>
+                        <span>{course.professor || '교수명'}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.time}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.location}</span>
+                        <span>{course.timeslot || '강의시간'}</span>
                       </div>
                     </div>
                   </div>
@@ -304,7 +298,7 @@ export default function Search() {
                       <DialogTitle className="text-2xl mb-2">{selectedCourse.name}</DialogTitle>
                       <DialogDescription className="flex items-center space-x-2">
                         <Badge variant="secondary">{selectedCourse.type}</Badge>
-                        <span>•</span>
+                        <span>·</span>
                         <span>{selectedCourse.department}</span>
                       </DialogDescription>
                     </div>
@@ -331,7 +325,7 @@ export default function Search() {
                         <Star className="h-5 w-5 text-yellow-500 fill-current" />
                         <div>
                           <p className="text-sm text-muted-foreground">평점</p>
-                          <p>{selectedCourse.rating} ({details.reviews}개의 리뷰)</p>
+                          <p>{selectedCourse.rating} ({details.reviews}건 리뷰)</p>
                         </div>
                       </div>
                     </div>
@@ -339,21 +333,14 @@ export default function Search() {
                       <div className="flex items-center space-x-2">
                         <Clock className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm text-muted-foreground">강의 시간</p>
-                          <p>{selectedCourse.time}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">강의실</p>
-                          <p>{selectedCourse.location}</p>
+                          <p className="text-sm text-muted-foreground">시간표</p>
+                          <p>{selectedCourse.timeslot}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Users className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm text-muted-foreground">수강 정원</p>
+                          <p className="text-sm text-muted-foreground">수강 인원</p>
                           <p>{selectedCourse.enrolled}/{selectedCourse.capacity}명</p>
                         </div>
                       </div>
@@ -373,7 +360,7 @@ export default function Search() {
                   <Separator />
 
                   <div>
-                    <h4 className="mb-3">연관 키워드</h4>
+                    <h4 className="mb-3">관련 키워드</h4>
                     <div className="flex flex-wrap gap-2">
                       {details.keywords.map((keyword: string) => (
                         <Badge key={keyword} variant="secondary" className="px-3 py-1">{keyword}</Badge>
@@ -397,7 +384,7 @@ export default function Search() {
                   <div>
                     <h4 className="flex items-center space-x-2 mb-3">
                       <Award className="h-4 w-4" />
-                      <span>평가 방식</span>
+                      <span>평가 비율</span>
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
@@ -422,14 +409,14 @@ export default function Search() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">난이도</p>
-                      <Badge variant={details.difficulty === '쉬움' ? 'secondary' : details.difficulty === '보통' ? 'outline' : 'destructive'}>
+                      <Badge variant={details.difficulty === '어려움' ? 'secondary' : details.difficulty === '보통' ? 'outline' : 'destructive'}>
                         {details.difficulty}
                       </Badge>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">수강 가능 여부</p>
                       <Badge variant={selectedCourse.enrolled < selectedCourse.capacity ? 'default' : 'destructive'}>
-                        {selectedCourse.enrolled < selectedCourse.capacity ? '수강 가능' : '정원 마감'}
+                        {selectedCourse.enrolled < selectedCourse.capacity ? '수강 가능' : '마감'}
                       </Badge>
                     </div>
                   </div>

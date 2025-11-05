@@ -1,15 +1,21 @@
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+﻿from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from datetime import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from typing import List
 import os
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 MONGO_URL = os.getenv("MONGO_URL") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017"
 DB_NAME = os.getenv("DB_NAME", "gnu_sys")
-# 콤마로 나열하면 우선 사용, 비어있으면 자동 감지
-COURSE_COLLECTIONS = [c.strip() for c in os.getenv("COURSE_COLLECTIONS", "").split(",") if c.strip()]
+# 肄ㅻ쭏濡??섏뿴?섎㈃ ?곗꽑 ?ъ슜, 鍮꾩뼱?덉쑝硫??먮룞 媛먯?
+# Comma-separated list; prefer COURSE_COLLECTIONS, but also accept common misspelling COURSE_COLECTIONS
+_raw_course_collections = (
+    os.getenv("COURSE_COLLECTIONS")
+    or os.getenv("COURSE_COLECTIONS")
+    or ""
+)
+COURSE_COLLECTIONS = [c.strip() for c in _raw_course_collections.split(",") if c.strip()]
 
 client: AsyncIOMotorClient | None = None
 db: AsyncIOMotorDatabase | None = None
@@ -35,17 +41,19 @@ def get_db() -> AsyncIOMotorDatabase:
 
 async def get_course_collections() -> List[AsyncIOMotorCollection]:
     """
-    1) COURSE_COLLECTIONS=.env에 지정돼 있으면 그 목록 사용
-    2) 아니면 DB에서 자동으로 컬렉션 검색:
-       - 'courses_' 로 시작하는 것 전부
-       - 혹시 쓰는 교양용 컬렉션이 따로 있으면 추가
+    1) COURSE_COLLECTIONS=.env??吏?뺣뤌 ?덉쑝硫?洹?紐⑸줉 ?ъ슜
+    2) ?꾨땲硫?DB?먯꽌 ?먮룞?쇰줈 而щ젆??寃??
+       - 'courses_' 濡??쒖옉?섎뒗 寃??꾨?
+       - ?뱀떆 ?곕뒗 援먯뼇??而щ젆?섏씠 ?곕줈 ?덉쑝硫?異붽?
     """
     database = get_db()
-    names = COURSE_COLLECTIONS
+    # Optional override: force a single collection temporarily via env
+    single = os.getenv("SINGLE_COURSE_COLLECTION") or os.getenv("COURSE_COLLECTION_ONLY") or os.getenv("COURSE_ONLY")
+    names = [single] if single else COURSE_COLLECTIONS
     if not names:
         all_names = await database.list_collection_names()
         names = [n for n in all_names if n.startswith("courses_")]
-        # 필요하면 아래 추가:
+        # ?꾩슂?섎㈃ ?꾨옒 異붽?:
         for extra in ("core_general", "balance_general", "basic_general", "courses_NormalStudy"):
             if extra in all_names:
                 names.append(extra)
@@ -57,6 +65,6 @@ async def ensure_indexes():
         await coll.create_index("course_code")
         await coll.create_index([("year", 1), ("group", 1), ("category", 1)])
         try:
-            await coll.create_index([("course_name", "text"), ("professor", "text"), ("category", "text")])
+            await coll.create_index([("course_name", "text"), ("professor", "text"), ("category", "text")]) 
         except Exception:
             pass

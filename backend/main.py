@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import connection
 from routers import courses, evaluations, requirements
@@ -15,12 +15,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 라우터 등록
-app.include_router(auth.router,         prefix="/auth",         tags=["Auth"]) # 인증 및 사용자 관리
-app.include_router(users.router,        prefix="/users",        tags=["Users"]) # 사용자 프로필 및 정보
-app.include_router(courses.router,      prefix="/courses",      tags=["Courses"]) # 강의 정보 및 검색
-app.include_router(evaluations.router,  prefix="/evaluations",  tags=["Evaluations"]) # 강의 평가
-app.include_router(requirements.router, prefix="/requirements", tags=["Requirements"]) # 졸업 요건
+# ?쇱슦???깅줉
+app.include_router(auth.router,         prefix="/auth",         tags=["Auth"]) # ?몄쬆 諛??ъ슜??愿由?
+app.include_router(users.router,        prefix="/users",        tags=["Users"]) # ?ъ슜???꾨줈??諛??뺣낫
+app.include_router(courses.router,      prefix="/courses",      tags=["Courses"]) # 媛뺤쓽 ?뺣낫 諛?寃??
+app.include_router(evaluations.router,  prefix="/evaluations",  tags=["Evaluations"]) # 媛뺤쓽 ?됯?
+app.include_router(requirements.router, prefix="/requirements", tags=["Requirements"]) # 議몄뾽 ?붽굔
 
 @app.on_event("startup")
 async def on_startup():
@@ -28,7 +28,7 @@ async def on_startup():
     await connection.connect_to_mongo()
     db = connection.get_db() 
 
-    # 필요한 인덱스들 (존재하면 MongoDB가 무시)
+    # ?꾩슂???몃뜳?ㅻ뱾 (議댁옱?섎㈃ MongoDB媛 臾댁떆)
     await db.users.create_index("student_id", unique=True)
     # Cleanup invalid usernames (null/empty) before creating a unique index
     try:
@@ -51,7 +51,7 @@ async def on_startup():
     await db.requirements.create_index("department_scope")
     await db.requirements.create_index("year")
 
-    # 여러 과목 컬렉션 공통 인덱스 (courses_2025_major 등)
+    
     await connection.ensure_indexes()
 
 @app.on_event("shutdown")
@@ -61,3 +61,4 @@ async def on_shutdown():
 @app.get("/")
 def root():
     return {"ok": True, "service": "gnu_sys"}
+

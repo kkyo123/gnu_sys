@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Query, HTTPException
+﻿from fastapi import APIRouter, Query, HTTPException
 from typing import Any, Dict, List, Optional, Tuple
 import re
 from database.connection import get_db, get_course_collections
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 router = APIRouter(tags=["Courses"])
@@ -15,9 +15,6 @@ class CourseOut(BaseModel):
     course_name: Optional[str] = None
     course_code: Optional[str] = None
     professor: Optional[str] = None
-    timeslot: Optional[str] = None
-    credits: Optional[int] = None
-    cls: Optional[str] = Field(default=None, serialization_alias="class", validation_alias="class")
     group: Optional[str] = None              # 전공/교양/일반선택/교직
     year: Optional[int] = None
     major_track: Optional[str] = None        # 컴퓨터 과학/컴퓨터 소프트웨어/빅데이터
@@ -223,50 +220,6 @@ async def _fetch_union_collections(
 
     return result
 
-# --- Normalize course document for response -----------------------------------
-def _normalize_course_for_response(doc: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    if not isinstance(doc, Dict):
-        return None
-    d = dict(doc)
-    # course_name backfill
-    if not d.get("course_name"):
-        for k in ("name", "title", "courseTitle", "과목명"):
-            v = d.get(k)
-            if isinstance(v, str) and v.strip():
-                d["course_name"] = v.strip()
-                break
-    if not d.get("course_name"):
-        return None
-    # timeslot backfill
-    if not d.get("timeslot"):
-        for k in ("time", "times", "schedule", "시간표"):
-            v = d.get(k)
-            if isinstance(v, str) and v.strip():
-                d["timeslot"] = v.strip()
-                break
-    # class backfill (normalize into key 'class')
-    if not d.get("class"):
-        for k in ("class", "section", "분반"):
-            v = d.get(k)
-            if isinstance(v, str) and v.strip():
-                d["class"] = v.strip()
-                break
-    # credits backfill
-    if d.get("credits") is None:
-        v = d.get("credit")
-        if isinstance(v, (int, float)):
-            d["credits"] = int(v)
-        else:
-            try:
-                d["credits"] = int(str(v)) if v is not None else None
-            except Exception:
-                pass
-    # course_code cast to string if numeric
-    cc = d.get("course_code")
-    if isinstance(cc, (int, float)):
-        d["course_code"] = str(int(cc))
-    return d
-
 # --- 엔드포인트: 목록 -----------------------------------------------------------
 
 @router.get("", response_model=List[CourseOut])
@@ -277,8 +230,8 @@ async def list_courses(
     category: Optional[str] = None,                   # 전공필수/전공선택/핵심/균형/기초 등
     major_track: Optional[str] = None,                # 컴퓨터 과학/컴퓨터 소프트웨어/빅데이터
     general_type: Optional[str] = None,               # 핵심 교양/균형 교양/기초 교양/일반선택·교직
-    limit: int = Query(20, ge=1, le=100), 
-    skip: int = Query(0, ge=0), 
+    limit: int = Query(20, ge=1, le=100),
+    skip: int = Query(0, ge=0),
     collection: Optional[str] = Query(None, description="특정 컬렉션만"),
 ):
     db = get_db()
@@ -293,8 +246,6 @@ async def list_courses(
         defaults = _defaults_from_collection(collection)
         col = db[collection]
         docs = await _fetch_from_collection(col, defaults, match, skip=skip, limit=limit)
-        docs = [_normalize_course_for_response(d) for d in (docs or [])]
-        docs = [d for d in docs if d]
         return docs
 
     # 여러 컬렉션 union
@@ -306,8 +257,6 @@ async def list_courses(
         return (d.get("requirement_id") or "", d.get("course_code") or "")
     docs.sort(key=_key)
 
-    docs = [_normalize_course_for_response(d) for d in (docs or [])]
-    docs = [d for d in docs if d]
     return docs
 
 # --- 엔드포인트: 개수 -----------------------------------------------------------
@@ -344,3 +293,4 @@ async def count_courses(
         except Exception:
             continue
     return total
+

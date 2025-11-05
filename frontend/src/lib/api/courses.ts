@@ -1,19 +1,22 @@
 import { request } from './client';
 
-{/* 강의 출력 자료형태 */}
+// 강의 출력 자료형태
 export type CourseOut = {
   requirement_id?: string;
   category?: string;
   course_name?: string;
   course_code?: string;
   professor?: string;
-  group?: string; // 전공/교양/일반선택/교직
+  credits?: number;
+  timeslot?: string;
+  class?: string;
+  group?: string;
   year?: number;
   major_track?: string;
-  general_type?: string; // 핵심/균형/기초 등
+  general_type?: string;
   source_collection?: string;
   source_sheet?: string;
-  description?: string; // 서버 필드명이 한글일 수 있어 보조 사용
+  description?: string;
   [key: string]: any;
 };
 

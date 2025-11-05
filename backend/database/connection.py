@@ -47,9 +47,8 @@ async def get_course_collections() -> List[AsyncIOMotorCollection]:
        - ?뱀떆 ?곕뒗 援먯뼇??而щ젆?섏씠 ?곕줈 ?덉쑝硫?異붽?
     """
     database = get_db()
-    # Optional override: force a single collection temporarily via env
-    single = os.getenv("SINGLE_COURSE_COLLECTION") or os.getenv("COURSE_COLLECTION_ONLY") or os.getenv("COURSE_ONLY")
-    names = [single] if single else COURSE_COLLECTIONS
+    # Use configured COURSE_COLLECTIONS; ignore any single-collection overrides
+    names = COURSE_COLLECTIONS
     if not names:
         all_names = await database.list_collection_names()
         names = [n for n in all_names if n.startswith("courses_")]

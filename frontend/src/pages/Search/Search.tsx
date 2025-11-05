@@ -77,12 +77,66 @@ export default function Search() {
     }));
   }, [apiCourses]);
 
+  // 체크박스 필터 키와 실제 데이터상의 유형 문자열 매핑
+  // 1) 키를 표준 태그로 매핑 (프런트 고정 키 → 표준 태그)
+  const KEY_TO_TAG: Record<string, string> = {
+    balancedGeneral: 'balance_general',
+    basicGeneral: 'basic_general',
+    coreGeneral: 'core_general',
+    teacherTraining: 'teacher_training',
+    generalElective: 'general_elective',
+    majorRequired: 'major_required',
+    majorElective: 'major_elective',
+  };
+
+  // 2) 과목 raw 데이터에서 표준 태그를 유도
+  function deriveTags(raw: any): string[] {
+    const tags: string[] = [];
+    const cat = String(raw?.category ?? '').toLowerCase();
+    const gen = String(raw?.general_type ?? '').toLowerCase();
+    const grp = String(raw?.group ?? '').toLowerCase();
+    const src = String(raw?.source_collection ?? '').toLowerCase();
+
+    // 전공
+    if (cat.includes('전공필수')) tags.push('major_required');
+    if (cat.includes('전공선택')) tags.push('major_elective');
+
+    // 교양 (핵심/균형/기초) - 한글/영문/띄어쓰기/컬렉션명 모두 대응
+    if (gen.includes('핵심') || gen.includes('핵심 교양') || src.includes('core_general')) tags.push('core_general');
+    if (gen.includes('균형') || gen.includes('균형 교양') || src.includes('balance_general')) tags.push('balance_general');
+    if (gen.includes('기초') || gen.includes('기초 교양') || src.includes('basic_general')) tags.push('basic_general');
+
+    // 일반선택/교직
+    if (gen.includes('일반선택') || src.includes('courses_normalstudy') || cat.includes('일반선택')) tags.push('general_elective');
+    if (gen.includes('교직') || src.includes('courses_normalstudy') || cat.includes('교직')) tags.push('teacher_training');
+
+    // 보조: group이 교양이면 일반선택일 가능성 보조 처리(과도한 매칭 방지 위해 중복만 허용)
+    if (grp.includes('교양') && !tags.some(t => t.startsWith('major_'))) {
+      // 이미 특정 교양 태그가 있으면 유지, 없으면 일반선택 후보로만 추가
+      if (!tags.includes('core_general') && !tags.includes('balance_general') && !tags.includes('basic_general')) {
+        if (!tags.includes('general_elective')) tags.push('general_elective');
+      }
+    }
+    return Array.from(new Set(tags));
+  }
+
   const filteredCourses = useMemo(() => {
+    const activeKeys = Object.entries(selectedFilters)
+      .filter(([, v]) => Boolean(v))
+      .map(([k]) => k);
+
     return normalized.filter((course) => {
       const matchesDepartment = !selectedDepartment || selectedDepartment === '전체' || course.department === selectedDepartment;
-      return matchesDepartment;
+
+      // 체크박스가 하나도 선택되지 않았으면 유형 필터는 통과
+      if (activeKeys.length === 0) return matchesDepartment;
+
+      const tags = deriveTags((course as any).raw || course);
+      const matchesSelected = activeKeys.some((key) => tags.includes(KEY_TO_TAG[key]));
+
+      return matchesDepartment && matchesSelected;
     });
-  }, [normalized, selectedDepartment]);
+  }, [normalized, selectedDepartment, selectedFilters]);
 
   const handleFilterChange = (filter: string, checked: boolean) => {
     setSelectedFilters(prev => ({ ...prev, [filter]: checked }));

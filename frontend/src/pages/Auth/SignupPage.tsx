@@ -36,6 +36,11 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    // 이름 필수 검증
+    if (!formData.name.trim()) {
+      setError('이름을 입력하세요');
+      return;
+    }
     // 학번 형식 검증: 숫자 8~10자리
     if (!/^\d{8,10}$/.test(formData.studentId)) {
       setError('학번은 숫자 8~10자리여야 합니다.');
@@ -96,7 +101,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">이름</Label>

@@ -17,8 +17,9 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    username: '',
     studentId: '',
+    department: '',
     password: '',
     confirmPassword: '',
   });
@@ -36,7 +37,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
     e.preventDefault();
     setError(null);
     if (!agreeTerms) {
-      setError('이용약관에 동의해주세요.');
+      setError('이용약관에 동의해 주세요.');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -47,11 +48,12 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
       setIsLoading(true);
       await register({
         student_id: formData.studentId,
-        email: formData.email,
         name: formData.name,
         password: formData.password,
+        username: formData.username,
+        department: formData.department,
       });
-      // 회원가입 완료 페이지로 이동
+      // 회원가입 완료 화면으로 이동
       navigate('/signup/success');
     } catch (err: any) {
       setError(err?.message || '회원가입 처리 중 오류가 발생했습니다.');
@@ -68,7 +70,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
             <GraduationCap className="h-10 w-10 text-primary" />
             <span className="text-2xl">UniCourse</span>
           </div>
-          <p className="text-muted-foreground">새 계정을 만들어보세요</p>
+          <p className="text-muted-foreground">새 계정을 만들어주세요</p>
         </div>
 
         <Card>
@@ -100,7 +102,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Label htmlFor="studentId">학번</Label>
                   <Input
                     id="studentId"
-                    placeholder="2021123456"
+                    placeholder="2023123456"
                     value={formData.studentId}
                     onChange={(e) => handleInputChange('studentId', e.target.value)}
                     required
@@ -108,16 +110,27 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="student@university.ac.kr"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">아이디</Label>
+                  <Input
+                    id="username"
+                    placeholder="unicourse123"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">학과</Label>
+                  <Input
+                    id="department"
+                    placeholder="컴퓨터공학과"
+                    value={formData.department}
+                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -126,7 +139,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder="비밀번호를 입력해 주세요"
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
@@ -153,7 +166,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="비밀번호를 다시 입력하세요"
+                    placeholder="비밀번호를 다시 입력해 주세요"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     required
@@ -185,7 +198,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
 
               {error && <div className="text-sm text-red-600">{error}</div>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? '가입 중...' : '회원가입'}
+                {isLoading ? '처리 중...' : '회원가입'}
               </Button>
             </form>
 

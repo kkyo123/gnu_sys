@@ -21,9 +21,11 @@ export async function me(token: string): Promise<any> {
 
 export type RegisterBody = {
   student_id: string;
-  email: string;
   name: string;
   password: string;
+  // Optional extras for extended profile
+  username?: string; // 아이디
+  department?: string; // 학과
 };
 
 export async function register(body: RegisterBody): Promise<{ message: string }> {

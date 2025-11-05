@@ -45,20 +45,21 @@ export default function Search() {
     let active = true;
     (async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const data = await listCourses({ q: searchQuery, limit: 50 });
-        if (active) setApiCourses(data || []);
-      } catch (e: any) {
-        if (active) setError(e?.message || '검색 중 오류가 발생했습니다');
-      } finally {
-        if (active) setLoading(false);
+        setLoading(true); // 로딩 시작
+        setError(null); // 이전 오류 초기화
+        const data = await listCourses({ q: searchQuery, limit: 50 }); // 검색어에 따른 강의 목록 불러오기
+        if (active) setApiCourses(data || []); // 데이터 설정
+      } catch (e: any) { // 오류 처리
+        if (active) setError(e?.message || '검색 중 오류가 발생했습니다');  // 오류 메시지 설정
+      } finally { 
+        if (active) setLoading(false); // 로딩 종료
       }
     })();
     return () => {
-      active = false;
+      active = false; // 컴포넌트 언마운트 시 비활성화
     };
-  }, [searchQuery]);
+  }, [searchQuery]); // 검색어 변경 시마다 실행
+
 
   const normalized = useMemo(() => {
     return apiCourses.map((c) => ({
@@ -131,8 +132,8 @@ export default function Search() {
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="강의명, 교수명으로 검색하세요"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchQuery} // 검색어 상태 바인딩
+              onChange={(e) => setSearchQuery(e.target.value)} // 입력 변경 시 상태 업데이트
               className="pl-10"
             />
           </div>
@@ -244,9 +245,10 @@ export default function Search() {
             <Card><CardContent className="pt-6">불러오는 중...</CardContent></Card>
           )}
           {error && !loading && (
-            <Card><CardContent className="pt-6 text-red-600">{error}</CardContent></Card>
+            <Card><CardContent className="pt-6 text-red-600">{error}</CardContent></Card> // 오류 메시지 표시
           )}
-          {!loading && !error && filteredCourses.map((course) => (
+          {/* --- 강의 카드 렌더링 --- */}
+          {!loading && !error && filteredCourses.map((course) => ( 
             <Card key={course.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">

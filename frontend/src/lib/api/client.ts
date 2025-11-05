@@ -7,7 +7,8 @@ function buildUrl(path: string): string {
   return `${API_BASE}/${path}`;
 }
 
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+{/* API 요청 함수 */}
+export async function request<T>(path: string, init?: RequestInit): Promise<T> { 
   const url = buildUrl(path);
   const method = (init?.method || 'GET').toUpperCase();
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) {

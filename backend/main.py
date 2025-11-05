@@ -16,11 +16,11 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(auth.router,         prefix="/auth",         tags=["Auth"])
-app.include_router(users.router,        prefix="/users",        tags=["Users"])
-app.include_router(courses.router,      prefix="/courses",      tags=["Courses"])
-app.include_router(evaluations.router,  prefix="/evaluations",  tags=["Evaluations"])
-app.include_router(requirements.router, prefix="/requirements", tags=["Requirements"])
+app.include_router(auth.router,         prefix="/auth",         tags=["Auth"]) # 인증 및 사용자 관리
+app.include_router(users.router,        prefix="/users",        tags=["Users"]) # 사용자 프로필 및 정보
+app.include_router(courses.router,      prefix="/courses",      tags=["Courses"]) # 강의 정보 및 검색
+app.include_router(evaluations.router,  prefix="/evaluations",  tags=["Evaluations"]) # 강의 평가
+app.include_router(requirements.router, prefix="/requirements", tags=["Requirements"]) # 졸업 요건
 
 @app.on_event("startup")
 async def on_startup():

@@ -1,5 +1,6 @@
 import { request } from './client';
 
+{/* 강의 출력 자료형태 */}
 export type CourseOut = {
   requirement_id?: string;
   category?: string;

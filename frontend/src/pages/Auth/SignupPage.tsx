@@ -41,6 +41,11 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
       setError('학번은 숫자 8~10자리여야 합니다.');
       return;
     }
+    // 비밀번호 형식 검증: 영문, 숫자, 특수문자 포함 8~16자
+    if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,16}$/.test(formData.password)) {
+      setError('비밀번호는 영문, 숫자, 특수문자를 포함한 8~16자여야 합니다.');
+      return;
+    }
     if (!agreeTerms) {
       setError('이용약관에 동의해 주세요.');
       return;
@@ -153,6 +158,10 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                     placeholder="비밀번호를 입력해 주세요"
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
+                    minLength={8}
+                    maxLength={16}
+                    pattern="(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,16}"
+                    title="비밀번호는 영문, 숫자, 특수문자를 포함한 8~16자여야 합니다."
                     required
                   />
                   <Button
@@ -225,4 +234,3 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
     </div>
   );
 }
-

@@ -32,7 +32,7 @@ JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
 
 # ====== Schemas ======
 class UserCreate(BaseModel):
-    student_id: constr(regex=r"^\d{8,10}$")
+    student_id: constr(pattern=r"^[0-9]{8,10}$")
     username: str
     name: str
     password: str = Field(min_length=8, max_length=128)

@@ -30,7 +30,20 @@ async def on_startup():
 
     # 필요한 인덱스들 (존재하면 MongoDB가 무시)
     await db.users.create_index("student_id", unique=True)
-    await db.users.create_index("username", unique=True)
+    # Cleanup invalid usernames (null/empty) before creating a unique index
+    try:
+        await db.users.update_many({"$or": [{"username": None}, {"username": ""}]}, {"$unset": {"username": ""}})
+    except Exception:
+        pass
+    # Create unique index on username only when it exists and is non-empty string
+    try:
+        await db.users.create_index(
+            "username",
+            unique=True,
+            partialFilterExpression={"username": {"$exists": True, "$type": "string", "$ne": ""}},
+        )
+    except Exception:
+        pass
     await db.profiles.create_index("student_id", unique=True)
     await db.evaluations.create_index("course_code")
     await db.evaluations.create_index([("course_code", 1), ("student_id", 1)], unique=True)

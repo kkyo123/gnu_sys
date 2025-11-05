@@ -26,18 +26,21 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
     setError(null);
     try {
       const token = await login(identifier, password);
-      if ((import.meta as any).env?.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug('[auth] login token:', token?.access_token?.slice(0, 24) + '...');
-      }
       const profile = await me(token.access_token);
-      if ((import.meta as any).env?.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug('[auth] /auth/me profile:', profile);
-      }
       onLogin(profile);
     } catch (err: any) {
-      setError(err?.message || '로그인에 실패했습니다');
+      const raw = String(err?.message || '');
+      let message = '로그인에 실패했습니다';
+      if (/^401\b/.test(raw)) {
+        message = '아이디 또는 학번 혹은 비밀번호가 올바르지 않습니다.';
+      } else if (/^(400|422)\b/.test(raw)) {
+        message = '입력 정보를 확인해 주세요.';
+      } else if (/^429\b/.test(raw)) {
+        message = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+      } else if (/^5\d{2}\b/.test(raw)) {
+        message = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+      }
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +54,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
             <GraduationCap className="h-10 w-10 text-primary" />
             <span className="text-2xl">UniCourse</span>
           </div>
-          <p className="text-muted-foreground">학생 포털에 로그인하세요</p>
+          <p className="text-muted-foreground">학생 계정으로 로그인하세요</p>
         </div>
 
         <Card>
@@ -62,11 +65,11 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="id">이메일 또는 학번</Label>
+                <Label htmlFor="id">아이디 또는 학번</Label>
                 <Input
                   id="id"
                   type="text"
-                  placeholder="student@university.ac.kr 또는 2024123456"
+                  placeholder="unicourse123 또는 2024123456"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required
@@ -79,7 +82,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder="비밀번호를 입력해 주세요"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -128,11 +131,10 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
         </Card>
 
         <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>UniCourse – 학생들의 학업 관리를 돕습니다</p>
+          <p>UniCourse 는 학생들의 수강을 돕습니다</p>
           <p className="mt-1">© 2024 UniCourse. All rights reserved.</p>
         </div>
       </div>
     </div>
   );
 }
-

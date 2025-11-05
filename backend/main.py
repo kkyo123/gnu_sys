@@ -30,6 +30,7 @@ async def on_startup():
 
     # 필요한 인덱스들 (존재하면 MongoDB가 무시)
     await db.users.create_index("student_id", unique=True)
+    await db.users.create_index("username", unique=True)
     await db.profiles.create_index("student_id", unique=True)
     await db.evaluations.create_index("course_code")
     await db.evaluations.create_index([("course_code", 1), ("student_id", 1)], unique=True)

@@ -108,14 +108,15 @@ async def ping():
 async def register(payload: UserCreate):
     logger.info("/auth/register student_id=%s username=%s", payload.student_id, payload.username)
     db = connection.get_db()
-    exists = await db.users.find_one({
-        "$or": [
-            {"student_id": payload.student_id},
-            {"username": payload.username},
-        ]
-    })
-    if exists:
-        raise HTTPException(status_code=409, detail="User already exists")
+
+    # Check duplicates separately so frontend can distinguish
+    student_exists = await db.users.find_one({"student_id": str(payload.student_id)})
+    username_exists = await db.users.find_one({"username": payload.username})
+
+    if student_exists:
+        raise HTTPException(status_code=409, detail="Student ID already registered")
+    if username_exists:
+        raise HTTPException(status_code=409, detail="Username already taken")
 
     doc = {
         "student_id": str(payload.student_id),
@@ -129,9 +130,9 @@ async def register(payload: UserCreate):
     logger.info("/auth/register created user student_id=%s username=%s", payload.student_id, payload.username)
 
     await db.profiles.update_one(
-        {"student_id": payload.student_id},
+        {"student_id": str(payload.student_id)},
         {"$setOnInsert": {
-            "student_id": payload.student_id,
+            "student_id": str(payload.student_id),
             "nickname": payload.name,
             "department": payload.department or "",
             "bio": "",
@@ -139,7 +140,7 @@ async def register(payload: UserCreate):
         }},
         upsert=True,
     )
-    return {"message": "registered"}
+    return {"message": "User registered successfully"}
 
 @router.post("/login", response_model=TokenResponse, summary="login (student_id or username)")
 async def login(body: LoginRequest):

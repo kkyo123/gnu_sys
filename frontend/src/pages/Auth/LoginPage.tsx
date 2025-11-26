@@ -65,11 +65,11 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="id">아이디 또는 학번</Label>
+                <Label htmlFor="id">아이디(학번)</Label>
                 <Input
                   id="id"
                   type="text"
-                  placeholder="unicourse123 또는 2024123456"
+                  placeholder="아이디(학번)을 입력해 주세요"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required

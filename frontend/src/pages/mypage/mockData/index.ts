@@ -1,4 +1,4 @@
-import { AcademicData, KeywordPrefs, TimetableCourse } from '../../types/mypage';
+import { AcademicData, KeywordPrefs, TimetableCourse } from '../../../types/mypage';
 
 export const academicDataMock: AcademicData = {
   totalCredits: { current: 105, required: 130 },

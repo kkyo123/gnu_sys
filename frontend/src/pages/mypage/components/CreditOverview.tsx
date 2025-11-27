@@ -16,7 +16,7 @@ export const CreditOverview: React.FC<CreditOverviewProps> = ({ academicData }) 
   const progressPercent = Math.round(progress * 100);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="shadow-sm">
         <CardContent className="pt-6">
           <h3 className="mb-4">학점 이수 진행도</h3>

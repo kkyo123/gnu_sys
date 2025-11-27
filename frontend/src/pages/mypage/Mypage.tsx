@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { TrendingUp, Calendar, Edit, Target } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Button } from '../components/ui/button';
-import { CreditOverview } from './mypage/components/CreditOverview';
-import { Timetable } from './mypage/components/Timetable';
-import { KeywordPreferences } from './mypage/components/KeywordPreferences';
-import { AcademicData, KeywordPrefs, MyPageUser, TimetableCourse } from '../types/mypage';
-import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './mypage/constants';
-import { academicDataMock, keywordPrefsMock, timetableCoursesMock } from './mypage/mockData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Button } from '../../components/ui/button';
+import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourse } from '../../types/mypage';
+import { CreditOverview, Timetable, KeywordPreferences } from './components';
+import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
+import { academicDataMock, keywordPrefsMock, timetableCoursesMock } from './mockData';
 
 interface MyPageProps {
   user?: MyPageUser;
@@ -17,29 +15,28 @@ interface MyPageProps {
 }
 
 export default function Mypage({
-  user: _user,
   academicData = academicDataMock,
   timetableCourses = timetableCoursesMock,
   keywordPrefs = keywordPrefsMock,
-}: MyPageProps) {
+}: Omit<MyPageProps, 'user'>) {
   const [selectedSemester, setSelectedSemester] = useState('2025-1');
   const [, setIsTimetableEditOpen] = useState(false); // TODO: Dialog 연결
   const [, setIsKeywordEditOpen] = useState(false); // TODO: Dialog 연결
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background container mx-auto px-4 py-6">
       <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
         {/* SECTION A — 학점 이수 현황 */}
-        <section id="credit-overview" className="space-y-6">
+        <section id="credit-overview" className="space-y-6 mb-4">
           <h2 className="mb-2 flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
+            <TrendingUp className="w-6 h-6 text-primary" />
             학점 이수 현황
           </h2>
           <CreditOverview academicData={academicData} />
         </section>
 
         {/* SECTION B — 시간표 */}
-        <section id="timetable" className="space-y-4">
+        <section id="timetable" className="space-y-4 mb-4">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2">
               <Calendar className="h-6 w-6 text-primary" />

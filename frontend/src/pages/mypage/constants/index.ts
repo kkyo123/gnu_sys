@@ -1,7 +1,7 @@
-import { Weekday } from '../../types/mypage';
+import { Weekday } from '../../../types/mypage';
 
 export const START_HOUR = 9; // 시간표 시작 시각
-export const SLOT_COUNT = 9; // 9~17시 9개 슬롯
+export const SLOT_COUNT = 9; // 9~17시
 export const SLOT_HEIGHT = 68; // px per slot
 
 export const PROGRESS_RADIUS = 80;

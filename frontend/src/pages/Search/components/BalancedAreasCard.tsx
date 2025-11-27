@@ -32,6 +32,9 @@ export const BalancedAreasCard: React.FC<BalancedAreasCardProps> = ({ areas }) =
                 )}
                 <div className="flex flex-col text-sm">
                   <span className={done ? 'text-green-700' : 'text-muted-foreground'}>{area.name}</span>
+                  <span className="text-muted-foreground">
+                    {area.completedCredits}/{area.requiredCredits}학점
+                  </span>
                 </div>
               </div>
             );

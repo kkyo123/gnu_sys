@@ -1,12 +1,10 @@
-export type RequirementKey = 'majorRequired' | 'majorElective' | 'coreGeneral' | 'freeElective';
+export type RequirementKey = 'majorRequired' | 'majorElective' | 'coreGeneral' | 'balanceGeneral';
 export type CoursePriority = 'high' | 'medium' | 'low';
 export type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 export interface GraduationSummary {
   totalRequiredCredits: number;
   completedCredits: number;
-  minGpa: number;
-  gpa: number;
 }
 
 export interface CreditRequirement {

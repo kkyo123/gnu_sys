@@ -1,36 +1,36 @@
 import React from 'react';
 import { Card, CardContent } from '../../../components/ui/card';
 import { GraduationSummary } from '../../../types/graduation';
-import { remaining } from '../utils/graduation';
 import { CircularProgress } from './CircularProgress';
 
 interface GraduationOverviewProps {
   summary: GraduationSummary;
+  className?: string;
 }
 
-export const GraduationOverview: React.FC<GraduationOverviewProps> = ({ summary }) => {
-  const { totalRequiredCredits, completedCredits, gpa, minGpa } = summary;
-  const meetsGpa = gpa >= minGpa;
+export const GraduationOverview: React.FC<GraduationOverviewProps> = ({ summary, className }) => {
+  const { totalRequiredCredits, completedCredits } = summary;
+
+  const safeTotal = totalRequiredCredits <= 0 ? 1 : totalRequiredCredits;
+  const safeCompleted = Math.min(Math.max(completedCredits, 0), safeTotal);
+
+  const progressPercent = Math.round((safeCompleted / safeTotal) * 100);
 
   return (
-    <Card className="mb-6">
+    <Card className={className}>
       <CardContent className="pt-6">
-        <div className="flex flex-col items-center justify-center py-8">
+        <h3 className="mb-4">학점 이수 진행도</h3>
+        <div className="flex flex-col items-center justify-center py-4">
           <CircularProgress
             value={completedCredits}
             max={totalRequiredCredits}
-            label={`${completedCredits}학점`}
-            helper={`전체 ${totalRequiredCredits}학점`}
-            tone={remaining(completedCredits, totalRequiredCredits) === 0 ? 'success' : 'default'}
+            label={`${progressPercent}%`}
+            helper=""
+            tone="success"
           />
-          <div className="mt-4 text-center space-y-2">
-            <h3 className="text-xl font-semibold">졸업 이수 현황</h3>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span>남은 학점: {remaining(completedCredits, totalRequiredCredits)}학점</span>
-              <span className={meetsGpa ? 'text-green-600' : 'text-red-600'}>
-                GPA: {gpa.toFixed(2)} / 요구 {minGpa.toFixed(1)}
-              </span>
-            </div>
+          <div className="text-center text-sm text-muted-foreground mt-2 leading-tight">
+            <div>{completedCredits} / {totalRequiredCredits}학점</div>
+            <div>이수 학점 / 졸업학점</div>
           </div>
         </div>
       </CardContent>

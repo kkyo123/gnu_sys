@@ -7,9 +7,9 @@ import { LoginPage } from './pages/Auth/LoginPage';
 import { SignupPage } from './pages/Auth/SignupPage';
 import SignupSuccess from './pages/Auth/SignupSuccess';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Search from './pages/search/Search';
-import Recommend from './pages/search/Recommend';
-import Graduation from './pages/search/Graduation';
+import Search from './pages/Search/Search';
+import Recommend from './pages/Search/Recommend';
+import Graduation from './pages/Search/Graduation';
 import Mypage from './pages/Mypage';
 
 type User = any;

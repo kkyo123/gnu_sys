@@ -6,10 +6,11 @@ import { percent, remaining } from '../utils/graduation';
 
 interface RequirementGridProps {
   requirements: CreditRequirement[];
+  className?: string;
 }
 
-export const RequirementGrid: React.FC<RequirementGridProps> = ({ requirements }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+export const RequirementGrid: React.FC<RequirementGridProps> = ({ requirements, className }) => (
+  <div className={className ?? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'}>
     {requirements.map((req) => {
       const reqRemaining = remaining(req.completedCredits, req.requiredCredits);
       const reqPercent = percent(req.completedCredits, req.requiredCredits);

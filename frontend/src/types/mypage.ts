@@ -35,6 +35,8 @@ export interface TimetableCourse {
   color: TimetableColor;
 }
 
+import type { KeywordGroupKey } from '../pages/Mypage/keywordConfig';
+
 export interface KeywordPrefs {
-  selected: string[];
+  selected: Record<KeywordGroupKey, string[]>;
 }

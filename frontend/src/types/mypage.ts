@@ -1,4 +1,5 @@
 export type Weekday = 0 | 1 | 2 | 3 | 4; // 월~금
+
 export type TimetableColor =
   | 'bg-blue-500'
   | 'bg-purple-500'
@@ -30,9 +31,18 @@ export interface TimetableCourse {
   name: string;
   professor: string;
   day: Weekday;
-  startTime: number; // 24h 기준, 정수/0.5 단위
-  duration: number; // 시간 단위
+  startTime: number; // 시(hour) 기준
+  duration: number; // 시간(슬롯) 단위
   color: TimetableColor;
+}
+
+export interface CourseListItem {
+  id: string;
+  title: string;
+  professor: string;
+  credits: number;
+  semester: string;
+  category: string;
 }
 
 import type { KeywordGroupKey } from '../pages/Mypage/keywordConfig';

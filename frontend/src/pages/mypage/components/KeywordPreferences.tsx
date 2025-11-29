@@ -3,7 +3,7 @@ import { Edit } from 'lucide-react';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { KeywordPrefs } from '../../../types/mypage';
+import type { KeywordPrefs } from '../../../types/mypage';
 import { KEYWORD_GROUPS, type KeywordGroupKey } from '../keywordConfig';
 
 interface KeywordPreferencesProps {

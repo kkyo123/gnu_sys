@@ -3,7 +3,7 @@ import { BookOpen, GraduationCap, Target } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { CourseDifficulty, CoursePriority, CourseRecommendation } from '../../../types/graduation';
+import type { CourseDifficulty, CoursePriority, CourseRecommendation } from '../../../types/graduation';
 
 const priorityCopy: Record<CoursePriority, { label: string; className: string }> = {
   high: { label: '필수', className: 'bg-red-100 text-red-700 hover:bg-red-100' },

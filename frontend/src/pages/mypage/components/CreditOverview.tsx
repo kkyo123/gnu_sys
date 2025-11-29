@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Progress } from '../../../components/ui/progress';
-import { AcademicData } from '../../../types/mypage';
+import type { AcademicData } from '../../../types/mypage';
 import { PROGRESS_CIRCUMFERENCE, PROGRESS_RADIUS, PROGRESS_STROKE } from '../constants';
 
 interface CreditOverviewProps {

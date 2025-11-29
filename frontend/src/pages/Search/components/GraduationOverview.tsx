@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '../../../components/ui/card';
-import { GraduationSummary } from '../../../types/graduation';
+import type { GraduationSummary } from '../../../types/graduation';
 import { CircularProgress } from './CircularProgress';
 
 interface GraduationOverviewProps {

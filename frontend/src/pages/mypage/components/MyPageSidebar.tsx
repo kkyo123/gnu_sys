@@ -6,8 +6,7 @@ import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
 import { Badge } from '../../../components/ui/badge';
 import { Separator } from '../../../components/ui/separator';
 import type { MyPageUser, AcademicData } from '../../../types/mypage';
-import { MYPAGE_SECTION_IDS } from '../config';
-import type { MyPageSectionId } from '../config';
+import { MYPAGE_SECTION_IDS, type MyPageSectionId } from '../config';
 import type { KeywordGroupKey } from '../keywordConfig';
 
 interface MyPageSidebarProps {
@@ -28,8 +27,8 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
   setIsKeywordEditOpen,
 }) => {
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
-  const userName = user?.name || '김학생';
-  const userMajor = user?.major || '컴퓨터과학과';
+  const userName = user?.name || '홍길동';
+  const userMajor = user?.major || '컴퓨터공학과';
   const userStudentId = user?.id || '2021123456';
 
   const currentCredits = academicData.totalCredits.current;
@@ -40,17 +39,17 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
   return (
     <aside className="w-[260px] min-h-screen top-16 left-4 bg-white border-r z-20 px-3 py-6 fixed self-start">
       <div className="p-3 space-y-8">
-        {/* 1. 사용자 프로필 카드 */}
-        <div>
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-20 w-20 mb-3">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <Avatar className="h-20 w-20 mb-2">
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
               <h3 className="font-semibold text-base">{userName}</h3>
-              <p className="text-sm text-muted-foreground mb-0.5">{userMajor}</p>
-              <p className="text-sm text-muted-foreground mb-3">{userStudentId}</p>
+              <p className="text-sm text-muted-foreground">{userMajor}</p>
+              <p className="text-sm text-muted-foreground">{userStudentId}</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -61,36 +60,33 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
                 프로필 수정
               </Button>
             </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <Separator />
 
-        {/* 2. 현재 학기 요약 */}
         <div>
           <h4 className="text-sm text-muted-foreground mb-3">현재 학기</h4>
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">학기</span>
-                <span className="font-medium">2025년 1학기</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">수강 학점</span>
-                <span className="font-medium">15학점</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">총 이수학점</span>
-                <span className="font-medium">
-                  {currentCredits}/{requiredCredits}
-                </span>
-              </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">학기</span>
+              <span className="font-medium">2025년 1학기</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">수강 학점</span>
+              <span className="font-medium">15학점</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">누적 이수</span>
+              <span className="font-medium">
+                {currentCredits}/{requiredCredits}
+              </span>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        {/* 3. 선호 키워드 요약 */}
         <div>
           <h4 className="text-sm text-muted-foreground mb-3">선호 키워드</h4>
           <div className="flex flex-wrap gap-2 mb-3">
@@ -115,7 +111,6 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
 
         <Separator />
 
-        {/* 4. 바로가기(Quick Navigation) */}
         <div>
           <h4 className="text-sm text-muted-foreground mb-3">바로가기</h4>
           <div className="space-y-1">

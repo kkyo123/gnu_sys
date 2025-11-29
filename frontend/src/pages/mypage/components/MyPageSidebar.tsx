@@ -33,8 +33,8 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
   const requiredCredits = academicData.totalCredits.required;
 
   return (
-    <aside className="w-[220px] min-h-screen bg-white border-r sticky top-16 self-start px-4 py-6">
-      <div className="p-5 space-y-8">
+    <aside className="w-[260px] min-h-screen top-16 left-4 bg-white border-r z-20 px-3 py-6 fixed self-start">
+      <div className="p-3 space-y-8">
         {/* 1. 사용자 프로필 카드 */}
         <div>
             <div className="flex flex-col items-center text-center">

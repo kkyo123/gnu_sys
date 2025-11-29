@@ -48,7 +48,7 @@ export default function Mypage({
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="flex gap-6">
+      <div className="flex">
         {/* 사이드바 */}
         <MyPageSidebar
           user={undefined}
@@ -60,7 +60,10 @@ export default function Mypage({
         />
 
         {/* 메인 콘텐츠 */}
-        <div className="flex-1 max-w-4xl px-6 py-4 md:p-8 space-y-13">
+        <div
+          className="mx-auto px-6 py-4 space-y-16"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* SECTION A — 학점 이수 현황 */}
           <section ref={creditOverviewRef} id="credit-overview" className="space-y-6">
             <h2 className="mb-2 flex items-center gap-2">
@@ -113,6 +116,7 @@ export default function Mypage({
             <KeywordPreferences prefs={keywordPrefs} onEdit={() => setIsKeywordEditOpen(true)} />
           </section>
         </div>
+      </div>
       </div>
     </main>
   );

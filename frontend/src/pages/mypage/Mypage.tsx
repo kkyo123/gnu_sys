@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react';
-import { TrendingUp, Calendar, Edit, Target } from 'lucide-react';
+import { TrendingUp, Calendar, Target } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Button } from '../../components/ui/button';
 import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourse } from '../../types/mypage';
-import { CreditOverview, Timetable, KeywordPreferences, MyPageSidebar } from './components';
+import { CreditOverview, Timetable, KeywordPreferences, MyPageSidebar, TimetableEditSection } from './components';
 import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
 import { mockUser, mockAcademicData, mockKeywordPrefs, getCoursesBySemester } from './userData';
 import {
@@ -26,7 +25,6 @@ export default function Mypage({
   keywordPrefs = mockKeywordPrefs,
 }: Omit<MyPageProps, 'timetableCourses'>) {
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
-  const [, setIsTimetableEditOpen] = useState(false); // TODO: Dialog 연결
   const [, setIsKeywordEditOpen] = useState(false); // TODO: Dialog 연결
   const [, setIsProfileEditOpen] = useState(false); // TODO: Dialog 연결
 
@@ -100,10 +98,7 @@ export default function Mypage({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={() => setIsTimetableEditOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  시간표 수정하기
-                </Button>
+                <TimetableEditSection />
               </div>
             </div>
 

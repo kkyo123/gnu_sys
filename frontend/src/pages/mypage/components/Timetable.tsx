@@ -121,12 +121,13 @@ const TimetableGrid: React.FC<{
         {courseBlocks.map((course) => (
           <div
             key={course.id}
-            className={`absolute text-xs text-white p-2 rounded-md shadow ${course.color}`}
+            className="absolute text-xs text-white p-2 rounded-md shadow"
             style={{
               top: course.top,
               left: course.left,
               width: DAY_COL_WIDTH,
               height: course.height,
+              backgroundColor: course.color,
             }}
           >
             <div className="font-semibold truncate">{course.name}</div>
@@ -146,12 +147,7 @@ export const Timetable: React.FC<TimetableProps> = ({ days, startHour, slotCount
   return (
     <Card className="shadow-sm">
       <CardContent className="pt-6 pb-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            월~금 · 1~9교시
-          </div>
-        </div>
+        
         <div className="flex justify-center">
           <TimetableGrid days={days} timeSlots={timeSlots} slotHeight={slotHeight} courses={courses} />
         </div>

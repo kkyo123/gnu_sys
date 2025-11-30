@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react';
 import { Calendar, Target, TrendingUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourse } from '../../types/mypage';
+import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '../../types/mypage';
 import { CreditOverview, KeywordPreferences, MyPageSidebar, Timetable, TimetableEditSection } from './components';
+import { CourseDebugTable } from './components/CourseDebugTable'; // DEBUG: 테스트용 테이블
 import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
-import { mockUser, mockAcademicData, mockKeywordPrefs, getCoursesBySemester } from './userData';
+import { mockUser, mockAcademicData, mockKeywordPrefs } from './userData';
+import { mockCoursesBySemester } from './courseData';
+import { toMainTimetable } from './courseTransforms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import {
   DEFAULT_SELECTED_SEMESTER,
@@ -16,7 +19,7 @@ import {
 interface MyPageProps {
   user?: MyPageUser;
   academicData?: AcademicData;
-  timetableCourses?: TimetableCourse[];
+  timetableCourses?: TimetableCourseStandard[];
   keywordPrefs?: KeywordPrefs;
 }
 
@@ -26,10 +29,13 @@ export default function Mypage({
   keywordPrefs = mockKeywordPrefs,
 }: Omit<MyPageProps, 'timetableCourses'>) {
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
-  const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false); // TODO: Dialog 연동
-  const [, setIsProfileEditOpen] = useState(false); // TODO: Dialog 연동
+  const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false);
+  const [, setIsProfileEditOpen] = useState(false);
+  const [selectedBySemester, setSelectedBySemester] = useState<Record<string, TimetableCourseStandard[]>>(() =>
+    Object.fromEntries(Object.entries(mockCoursesBySemester).map(([sem, courses]) => [sem, [...courses]])),
+  );
 
-  const semesterCourses = getCoursesBySemester(selectedSemester);
+  const semesterCourses = (selectedBySemester[selectedSemester] ?? []).map(toMainTimetable);
 
   const creditOverviewRef = useRef<HTMLElement>(null);
   const timetableRef = useRef<HTMLElement>(null);
@@ -45,6 +51,10 @@ export default function Mypage({
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleSaveSemesterCourses = (semester: string, courses: TimetableCourseStandard[]) => {
+    setSelectedBySemester((prev) => ({ ...prev, [semester]: courses }));
+  };
+
   return (
     <main className="min-h-screen bg-background">
       <div className="flex flex-row gap-4 max-w-6xl mx-auto px-4">
@@ -58,9 +68,11 @@ export default function Mypage({
             setIsKeywordEditOpen={setIsKeywordEditOpen}
           />
         </aside>
+
         <section className="w-1/2 min-w-0">
           <div className="text-white">---------------------------------------------------------------------------------------</div>
         </section>
+
         <section className="flex-col space-y-4 m-y-4 py-4">
           <section ref={creditOverviewRef} id={MYPAGE_SECTION_IDS.creditOverview} className="space-y-3">
             <h2 className="flex items-center gap-2">
@@ -89,7 +101,12 @@ export default function Mypage({
                     ))}
                   </SelectContent>
                 </Select>
-                <TimetableEditSection />
+                <TimetableEditSection
+                  currentSemester={selectedSemester}
+                  selectedBySemester={selectedBySemester}
+                  onSaveSemesterCourses={handleSaveSemesterCourses}
+                  onSemesterChange={setSelectedSemester}
+                />
               </div>
             </div>
 
@@ -99,6 +116,11 @@ export default function Mypage({
               slotCount={SLOT_COUNT}
               slotHeight={SLOT_HEIGHT}
               courses={semesterCourses}
+            />
+
+            <CourseDebugTable
+              title={`DEBUG 강의 리스트 (${selectedSemester})`}
+              courses={selectedBySemester[selectedSemester] ?? []}
             />
           </section>
 
@@ -112,12 +134,10 @@ export default function Mypage({
         </section>
       </div>
 
-
-      //선호 키워드 팝업창      
       <Dialog open={isKeywordEditOpen} onOpenChange={setIsKeywordEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">선호 키워드 편집</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">선호 키워드 수정</DialogTitle>
           </DialogHeader>
         </DialogContent>
       </Dialog>

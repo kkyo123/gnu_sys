@@ -1,184 +1,156 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, Edit } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../components/ui/dialog';
+import { TimetableOnly, type Course as PreviewCourse } from './TimetableOnly';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
 import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { Card, CardContent } from '../../../components/ui/card';
+import { coursesByTab, type CourseTab } from '../courseData';
+import type { TimetableCourseStandard } from '../../../types/mypage';
+import { toPreviewCourse } from '../courseTransforms';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { SEMESTER_OPTIONS } from '../config';
 
-type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
+type TabKey = CourseTab | 'selected';
 
-interface TimetableCourse {
-  id: string;
-  name: string;
-  professor: string;
-  credits: number;
-  time: string; // 예: "화1,2,3"
-  day: Weekday;
-  startPeriod: number; // 1~9
-  duration: number; // 교시 수
-  colorClass: string; // tailwind bg-*
+interface TimetableEditSectionProps {
+  currentSemester: string;
+  selectedBySemester: Record<string, TimetableCourseStandard[]>;
+  onSaveSemesterCourses: (semester: string, courses: TimetableCourseStandard[]) => void;
+  onSemesterChange: (semester: string) => void;
 }
 
-type CourseTab = 'custom' | 'system' | 'graduation';
-
-const dayLabel: Record<Weekday, string> = { mon: '월', tue: '화', wed: '수', thu: '목', fri: '금' };
-const DAYS: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
-const START_PERIOD = 1;
-const END_PERIOD = 9;
-const ROW_HEIGHT = 52;
-
-const coursesByTab: Record<CourseTab, TimetableCourse[]> = {
-  custom: [
-    { id: '1', name: '알고리즘', professor: '최상민', credits: 3, time: '화1,2,3', day: 'tue', startPeriod: 1, duration: 3, colorClass: 'bg-rose-500' },
-    { id: '2', name: '정보보안개론', professor: '김지윤', credits: 3, time: '화6,7,8', day: 'tue', startPeriod: 6, duration: 3, colorClass: 'bg-teal-400' },
-    { id: '3', name: '운영체제', professor: '남영호', credits: 3, time: '수5,6,7', day: 'wed', startPeriod: 5, duration: 3, colorClass: 'bg-emerald-300' },
-    { id: '4', name: '데이터과학', professor: '서현', credits: 3, time: '목6,7,8', day: 'thu', startPeriod: 6, duration: 3, colorClass: 'bg-orange-400' },
-  ],
-  system: [
-    { id: '5', name: '인공지능', professor: '이민수', credits: 3, time: '월3,4,5', day: 'mon', startPeriod: 3, duration: 3, colorClass: 'bg-green-300' },
-    { id: '6', name: '데이터베이스', professor: '박준영', credits: 3, time: '수1,2,3', day: 'wed', startPeriod: 1, duration: 3, colorClass: 'bg-amber-200' },
-    { id: '7', name: '네트워크', professor: '정수진', credits: 3, time: '목2,3,4', day: 'thu', startPeriod: 2, duration: 3, colorClass: 'bg-rose-300' },
-    { id: '8', name: '컴퓨터구조', professor: '강민호', credits: 3, time: '금5,6,7', day: 'fri', startPeriod: 5, duration: 3, colorClass: 'bg-pink-300' },
-  ],
-  graduation: [
-    { id: '9', name: '프로그래밍언어론', professor: '윤서연', credits: 3, time: '월6,7,8', day: 'mon', startPeriod: 6, duration: 3, colorClass: 'bg-purple-300' },
-    { id: '10', name: '소프트웨어공학', professor: '최동욱', credits: 3, time: '화4,5,6', day: 'tue', startPeriod: 4, duration: 3, colorClass: 'bg-blue-300' },
-    { id: '11', name: '컴파일러', professor: '한지민', credits: 3, time: '수8,9', day: 'wed', startPeriod: 8, duration: 2, colorClass: 'bg-emerald-400' },
-    { id: '12', name: '모바일프로그래밍', professor: '임태훈', credits: 3, time: '금1,2,3', day: 'fri', startPeriod: 1, duration: 3, colorClass: 'bg-yellow-300' },
-  ],
-};
-
-const TimetableGrid: React.FC<{
-  days: Weekday[];
-  startPeriod: number;
-  endPeriod: number;
-  courses: TimetableCourse[];
-  hoveredCourse: TimetableCourse | null;
-}> = ({ days, startPeriod, endPeriod, courses, hoveredCourse }) => {
-  const periods = useMemo(
-    () => Array.from({ length: endPeriod - startPeriod + 1 }, (_, i) => startPeriod + i),
-    [startPeriod, endPeriod],
-  );
-
-  const blocks = [...courses, ...(hoveredCourse ? [{ ...hoveredCourse, id: 'hover-preview' }] : [])];
-  const periodToTop = (period: number) => (period - startPeriod) * ROW_HEIGHT;
-
-  return (
-    <div className="relative border rounded-lg bg-white shadow-sm">
-      <div className="grid grid-cols-[60px_repeat(5,1fr)]">
-        <div className="h-10 border-b flex items-center justify-center text-sm text-muted-foreground">교시</div>
-        {days.map((d) => (
-          <div key={d} className="h-10 border-b flex items-center justify-center text-sm font-medium">
-            {dayLabel[d]}
-          </div>
-        ))}
-
-        {periods.map((p) => (
-          <React.Fragment key={p}>
-            <div className="h-13 border-b flex items-center justify-center text-xs text-muted-foreground">{p}교시</div>
-            {days.map((d) => (
-              <div key={`${d}-${p}`} className="h-13 border-b border-l last:border-r bg-muted/10" />
-            ))}
-          </React.Fragment>
-        ))}
-      </div>
-
-      <div className="absolute inset-x-[60px] top-10 bottom-0">
-        {blocks.map((course) => {
-          const dayIndex = days.indexOf(course.day);
-          if (dayIndex === -1) return null;
-          const top = periodToTop(course.startPeriod);
-          const height = course.duration * ROW_HEIGHT;
-          const left = (dayIndex * 100) / days.length;
-          const width = 100 / days.length;
-          const isPreview = course.id === 'hover-preview';
-          return (
-            <div
-              key={`${course.id}-${course.day}-${course.startPeriod}`}
-              className={`absolute rounded-md text-xs text-white p-2 shadow ${course.colorClass} ${isPreview ? 'opacity-50' : ''}`}
-              style={{ top, height, left: `${left}%`, width: `${width}%` }}
-            >
-              <div className="font-semibold truncate">{course.name}</div>
-              <div className="text-[11px] truncate">{course.professor}</div>
-              <div className="text-[11px] truncate">
-                {dayLabel[course.day]} {course.startPeriod}~{course.startPeriod + course.duration - 1}교시
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-export const TimetableEditSection: React.FC = () => {
+export const TimetableEditSection: React.FC<TimetableEditSectionProps> = ({
+  currentSemester,
+  selectedBySemester,
+  onSaveSemesterCourses,
+  onSemesterChange,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<CourseTab>('custom');
-  const [hoveredCourse, setHoveredCourse] = useState<TimetableCourse | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>('selected'); // 기본: 현재 학기
+  const [hoveredCourse, setHoveredCourse] = useState<TimetableCourseStandard | null>(null);
+  const [localSelected, setLocalSelected] = useState<Record<string, TimetableCourseStandard[]>>(selectedBySemester);
 
-  const [userCourses] = useState<TimetableCourse[]>(coursesByTab.custom);
-  const [systemCourses] = useState<TimetableCourse[]>(coursesByTab.system);
-  const [gradReqCourses] = useState<TimetableCourse[]>(coursesByTab.graduation);
+  useEffect(() => {
+    if (isOpen) {
+      // 팝업 열릴 때 최신 선택 상태를 가져옴
+      setLocalSelected(selectedBySemester);
+    }
+  }, [isOpen, selectedBySemester, currentSemester]);
 
-  const tabCourses: Record<CourseTab, TimetableCourse[]> = {
-    custom: userCourses,
-    system: systemCourses,
-    graduation: gradReqCourses,
+  const tabCourses: Record<TabKey, TimetableCourseStandard[]> = {
+    selected: localSelected[currentSemester] ?? [],
+    ...coursesByTab,
+  };
+
+  const toggleCourse = (course: TimetableCourseStandard) => {
+    setLocalSelected((prev) => {
+      const current = prev[currentSemester] ?? [];
+      const exists = current.some((c) => c.id === course.id);
+      const nextForSemester = exists ? current.filter((c) => c.id !== course.id) : [...current, course];
+      return { ...prev, [currentSemester]: nextForSemester };
+    });
+  };
+
+  const selectedCoursesForSemester = localSelected[currentSemester] ?? [];
+
+  const selectedPreviewCourses: PreviewCourse[] = useMemo(
+    () => (tabCourses[activeTab] ?? selectedCoursesForSemester).map(toPreviewCourse),
+    [tabCourses, activeTab, selectedCoursesForSemester],
+  );
+
+  const hoveredPreviewCourse: PreviewCourse | null = useMemo(
+    () => (hoveredCourse ? toPreviewCourse(hoveredCourse) : null),
+    [hoveredCourse],
+  );
+
+  const handleSave = () => {
+    onSaveSemesterCourses(currentSemester, selectedCoursesForSemester);
+    setIsOpen(false);
   };
 
   return (
     <>
       <Button onClick={() => setIsOpen(true)}>
-        <Edit className="h-4 w-4 mr-2" />
+        <Edit className="mr-2 h-4 w-4" />
         시간표 수정하기
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] max-w-[1200px]">
+        <DialogContent className="w-[98vw] max-w-none h-[98vh] max-h-[98vh]">
           <DialogHeader className="text-left">
             <DialogTitle>시간표 수정하기</DialogTitle>
-            <DialogDescription>선택한 학기의 시간표와 강의 목록을 확인하고 수정할 수 있습니다.</DialogDescription>
+            <DialogDescription>
+              탭을 선택하고 원하는 강의를 확인하여 시간표를 수정하세요.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 lg:grid-cols-[2fr_1.2fr] gap-6 w-full">
+          <div className="flex flex-nowrap space-x-3">
+            {/* 왼쪽: 시간표 미리보기 */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                월~금 · 1~9교시
+              <div className="flex items-center gap-2 flex-nowrap">
+                <span className="text-sm text-muted-foreground">학기 선택</span>
+                <Select
+                  value={currentSemester}
+                  onValueChange={(val) => {
+                    onSemesterChange(val);
+                    setHoveredCourse(null);
+                  }}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEMESTER_OPTIONS.map((sem) => (
+                      <SelectItem key={sem.value} value={sem.value}>
+                        {sem.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <TimetableGrid
-                days={DAYS}
-                startPeriod={START_PERIOD}
-                endPeriod={END_PERIOD}
-                courses={tabCourses[activeTab]}
-                hoveredCourse={hoveredCourse}
-              />
+
+              <TimetableOnly hoveredCourse={hoveredPreviewCourse} selectedCourses={selectedPreviewCourses} />
             </div>
 
+            {/* 오른쪽: 강의 리스트 + 탭 */}
             <div className="space-y-3">
-              <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as CourseTab)}>
-                <TabsList className="grid grid-cols-3 w-full mb-3">
-                  <TabsTrigger value="custom">사용자 지정</TabsTrigger>
-                  <TabsTrigger value="system">시스템 기반</TabsTrigger>
-                  <TabsTrigger value="graduation">졸업요건 기반</TabsTrigger>
+              <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabKey)}>
+                <TabsList className="mb-3 w-full flex flex-nowrap items-center">
+                  <TabsTrigger value="selected"  className="grow text-center">현재 학기</TabsTrigger>
+                  <TabsTrigger value="custom"  className="grow text-center">사용자 지정</TabsTrigger>
+                  <TabsTrigger value="system"  className="grow text-center">시스템 기반</TabsTrigger>
+                  <TabsTrigger value="graduation" className="grow text-center">졸업요건 기반</TabsTrigger>
                 </TabsList>
 
-                {(Object.keys(tabCourses) as CourseTab[]).map((tab) => (
+                {(['selected', 'custom', 'system', 'graduation'] as TabKey[]).map((tab) => (
                   <TabsContent key={tab} value={tab}>
                     <ScrollArea className="max-h-[460px] rounded-lg border bg-card p-4">
                       <div className="space-y-3">
                         {tabCourses[tab].length === 0 ? (
-                          <p className="py-6 text-center text-sm text-muted-foreground">등록된 강의가 없습니다.</p>
+                          <p className="py-6 text-center text-sm text-muted-foreground">
+                            등록된 강의가 없습니다.
+                          </p>
                         ) : (
                           tabCourses[tab].map((course) => (
                             <Card
                               key={course.id}
-                              className="shadow-sm cursor-pointer"
+                              className={`cursor-pointer shadow-sm ${
+                                selectedCoursesForSemester.some((c) => c.id === course.id) ? 'ring-2 ring-primary' : ''
+                              }`}
                               onMouseEnter={() => setHoveredCourse(course)}
                               onMouseLeave={() => setHoveredCourse(null)}
+                              onClick={() => toggleCourse(course)}
                             >
-                              <CardContent className="pt-3 pb-3 px-3 flex items-start gap-3">
+                              <CardContent className="flex items-start gap-3 px-3 py-3">
                                 <span
                                   className={`mt-1 inline-block h-2.5 w-2.5 rounded-full ${course.colorClass}`}
                                   aria-hidden
@@ -186,7 +158,11 @@ export const TimetableEditSection: React.FC = () => {
                                 <div className="space-y-1">
                                   <p className="text-sm font-medium leading-tight">{course.name}</p>
                                   <p className="text-xs text-muted-foreground">{course.professor}</p>
-                                  <p className="text-xs text-muted-foreground">{course.time}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {['월', '화', '수', '목', '금'][course.day]}
+                                    {course.periodStart}~
+                                    {course.periodStart + course.periodDuration - 1}교시
+                                  </p>
                                 </div>
                                 <div className="ml-auto text-xs text-muted-foreground">{course.credits}학점</div>
                               </CardContent>
@@ -205,7 +181,7 @@ export const TimetableEditSection: React.FC = () => {
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               취소
             </Button>
-            <Button onClick={() => setIsOpen(false)}>저장</Button>
+            <Button onClick={handleSave}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

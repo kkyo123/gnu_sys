@@ -5,6 +5,7 @@ import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourse } from '..
 import { CreditOverview, KeywordPreferences, MyPageSidebar, Timetable, TimetableEditSection } from './components';
 import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
 import { mockUser, mockAcademicData, mockKeywordPrefs, getCoursesBySemester } from './userData';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import {
   DEFAULT_SELECTED_SEMESTER,
   MYPAGE_SECTION_IDS,
@@ -25,7 +26,7 @@ export default function Mypage({
   keywordPrefs = mockKeywordPrefs,
 }: Omit<MyPageProps, 'timetableCourses'>) {
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
-  const [, setIsKeywordEditOpen] = useState(false); // TODO: Dialog 연동
+  const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false); // TODO: Dialog 연동
   const [, setIsProfileEditOpen] = useState(false); // TODO: Dialog 연동
 
   const semesterCourses = getCoursesBySemester(selectedSemester);
@@ -110,6 +111,16 @@ export default function Mypage({
           </section>
         </section>
       </div>
+
+
+      //선호 키워드 팝업창      
+      <Dialog open={isKeywordEditOpen} onOpenChange={setIsKeywordEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">선호 키워드 편집</DialogTitle>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

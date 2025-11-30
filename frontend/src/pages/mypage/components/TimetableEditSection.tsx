@@ -141,7 +141,7 @@ export const TimetableEditSection: React.FC = () => {
             <DialogDescription>선택한 학기의 시간표와 강의 목록을 확인하고 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.2fr] gap-6 w-full">
+          <div className="grid grid-cols-2 lg:grid-cols-[2fr_1.2fr] gap-6 w-full">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />

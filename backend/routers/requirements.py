@@ -1,3 +1,5 @@
+#졸업요건 정리/관리
+
 from fastapi import APIRouter, HTTPException, Query
 from database.connection import db, now_iso
 from models.requirement_model import RequirementCreate, RequirementPublic, RequirementUpdate

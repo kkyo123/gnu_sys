@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import connection
 from routers import courses, evaluations, requirements
 from routers import auth, users
+from routers import enrollments, dashboard, graduation
+
 
 app = FastAPI(title="gnu_sys")
 
@@ -21,6 +23,10 @@ app.include_router(users.router,        prefix="/users",        tags=["Users"]) 
 app.include_router(courses.router,      prefix="/courses",      tags=["Courses"]) # 媛뺤쓽 ?뺣낫 諛?寃??
 app.include_router(evaluations.router,  prefix="/evaluations",  tags=["Evaluations"]) # 媛뺤쓽 ?됯?
 app.include_router(requirements.router, prefix="/requirements", tags=["Requirements"]) # 議몄뾽 ?붽굔
+app.include_router(enrollments.router, prefix="", tags=["Enrollments"])
+app.include_router(dashboard.router,   prefix="", tags=["Dashboard"])
+app.include_router(graduation.router, prefix="/graduation", tags=["Graduation"])
+
 
 @app.on_event("startup")
 async def on_startup():

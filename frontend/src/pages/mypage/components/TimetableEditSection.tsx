@@ -228,6 +228,11 @@ export const TimetableEditSection: React.FC<TimetableEditSectionProps> = ({
     setLocalSelected((prev) => {
       const current = prev[currentSemester] ?? [];
       const exists = current.some((c) => c.id === course.id);
+
+      if (exists) {
+           setHoveredCourse(null);
+       }
+       
       const nextForSemester = exists ? current.filter((c) => c.id !== course.id) : [...current, course];
       return { ...prev, [currentSemester]: nextForSemester };
     });

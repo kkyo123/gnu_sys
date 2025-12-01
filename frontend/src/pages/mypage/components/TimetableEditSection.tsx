@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, Edit } from 'lucide-react';
-import { TimetableOnly, type Course as PreviewCourse } from './TimetableOnly';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import { Edit } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +13,186 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { Card, CardContent } from '../../../components/ui/card';
 import { coursesByTab, type CourseTab } from '../courseData';
-import type { TimetableCourseStandard } from '../../../types/mypage';
-import { toPreviewCourse } from '../courseTransforms';
+import type { TimetableCourse, TimetableCourseStandard, Weekday } from '../../../types/mypage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { SEMESTER_OPTIONS } from '../config';
 
 type TabKey = CourseTab | 'selected';
+
+// --- [ 시간표 설정 및 상수 ] --------------------------------------------------
+const tailwindToHex: Record<string, string> = {
+  'bg-rose-500': '#f43f5e',
+  'bg-teal-400': '#2dd4bf',
+  'bg-emerald-300': '#6ee7b7',
+  'bg-orange-400': '#fb923c',
+  'bg-green-300': '#86efac',
+  'bg-amber-200': '#fde68a',
+  'bg-rose-300': '#fecaca',
+  'bg-pink-300': '#f9a8d4',
+  'bg-purple-300': '#c4b5fd',
+  'bg-blue-300': '#93c5fd',
+  'bg-emerald-400': '#34d399',
+  'bg-yellow-300': '#fde047',
+  'bg-blue-500': '#3b82f6',
+  'bg-purple-500': '#a855f7',
+  'bg-green-500': '#22c55e',
+  'bg-orange-500': '#f97316',
+  'bg-pink-500': '#ec4899',
+};
+
+const DAYS: Record<Weekday, string> = { 0: '월', 1: '화', 2: '수', 3: '목', 4: '금' };
+const START_HOUR = 9; // 시간표 시작 시간 (예: 9시)
+const SLOT_COUNT = 9; // 9교시 (9시부터 9개 슬롯)
+const SLOT_HEIGHT = 50; // 슬롯 당 높이 (px)
+
+const TIME_COL_WIDTH = 70;
+const DAY_COL_WIDTH = 110;
+const GAP = 8;
+const HEADER_HEIGHT = 48;
+const PADDING = 8;
+const dayKeyOrder: Weekday[] = [0, 1, 2, 3, 4];
+// --- [ 시간표 설정 및 상수 끝 ] ----------------------------------------------
+
+// --- [ 타입 변환 함수: TimetableCourseStandard -> TimetableCourse ] ------------
+// periodStart(교시 번호)를 startTime(시(hour))로 변환
+const PERIOD_START_OFFSET = START_HOUR; // 1교시를 START_HOUR(9시)로 매핑한다고 가정
+const toTimetableCourse = (course: TimetableCourseStandard): TimetableCourse => ({
+  id: course.id,
+  name: course.name,
+  professor: course.professor,
+  day: course.day,
+  // periodStart가 1부터 시작하고, 1교시가 9시(START_HOUR)라면 offset은 9-1=8 입니다.
+  startTime: PERIOD_START_OFFSET + course.periodStart - 1,
+  duration: course.periodDuration,
+  color: tailwindToHex[course.colorClass] ?? '#3b82f6',
+});
+// --- [ 타입 변환 함수 끝 ] ----------------------------------------------------
+
+// --- [ TimetableGrid 컴포넌트 통합 ] ------------------------------------------
+const TimetableGrid: React.FC<{
+  days: Record<Weekday, string>;
+  timeSlots: number[];
+  slotHeight: number;
+  courses: TimetableCourse[];
+}> = ({ days, timeSlots, slotHeight, courses }) => {
+  // ... (TimetableGrid 컴포넌트의 로직은 그대로 유지) ...
+  const containerHeight =
+    PADDING * 2 +
+    HEADER_HEIGHT +
+    GAP +
+    timeSlots.length * slotHeight +
+    (timeSlots.length - 1) * GAP;
+
+  const containerWidth =
+    TIME_COL_WIDTH +
+    GAP +
+    dayKeyOrder.length * DAY_COL_WIDTH +
+    (dayKeyOrder.length - 1) * GAP;
+
+  const topForSlot = (slotIndex: number) => PADDING + HEADER_HEIGHT + GAP + slotIndex * (slotHeight + GAP);
+  const leftForDay = (dayIndex: number) =>
+    PADDING + TIME_COL_WIDTH + GAP + dayIndex * (DAY_COL_WIDTH + GAP);
+
+  const courseBlocks = courses.map((course) => {
+    // timeSlots[0] = START_HOUR (9)
+    const slotIndex = Math.max(0, course.startTime - timeSlots[0]);
+    const top = topForSlot(slotIndex);
+    const height = course.duration * slotHeight + (course.duration - 1) * GAP;
+    const dayIndex = dayKeyOrder.indexOf(course.day);
+    const left = leftForDay(dayIndex === -1 ? 0 : dayIndex);
+    return { ...course, top, height, left };
+  });
+
+  return (
+    <div
+      className="relative bg-white rounded-lg shadow-sm border"
+      style={{ height: containerHeight, width: containerWidth }}
+    >
+      {/* Grid structure (Time and Day headers, empty slots) */}
+      <div className="absolute inset-0" aria-hidden="true">
+        {/* Time column */}
+        <div
+          className="absolute top-0 left-0"
+          style={{ width: TIME_COL_WIDTH, height: containerHeight }}
+        >
+          <div
+            className="flex items-center justify-center text-xs font-semibold bg-primary text-primary-foreground rounded-md"
+            style={{ height: HEADER_HEIGHT, margin: PADDING }}
+          >
+            TIME
+          </div>
+          <div className="flex flex-col gap-2 px-2" style={{ marginTop: GAP }}>
+            {timeSlots.map((hour) => (
+              <div
+                key={hour}
+                className="flex items-center justify-center text-xs text-muted-foreground rounded-md bg-muted/40"
+                style={{ height: slotHeight }}
+              >
+                {hour.toString().padStart(2, '0')}:00
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Day columns and empty grid slots */}
+        <div
+          className="absolute top-0"
+          style={{ left: TIME_COL_WIDTH + GAP + PADDING, right: PADDING, height: containerHeight }}
+        >
+          <div className="flex gap-2" style={{ height: HEADER_HEIGHT, marginBottom: GAP }}>
+            {dayKeyOrder.map((d) => (
+              <div
+                key={d}
+                className="flex items-center justify-center text-sm font-medium bg-primary/90 text-primary-foreground rounded-md"
+                style={{ width: DAY_COL_WIDTH }}
+              >
+                {days[d]}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            {dayKeyOrder.map((d) => (
+              <div key={d} className="flex flex-col gap-2" style={{ width: DAY_COL_WIDTH }}>
+                {timeSlots.map((slot) => (
+                  <div
+                    key={`${d}-${slot}`}
+                    className="border border-muted rounded-md bg-muted/20"
+                    style={{ height: slotHeight }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Course blocks (Overlay) */}
+      <div className="absolute inset-0 pointer-events-none">
+        {courseBlocks.map((course) => (
+          <div
+            key={course.id}
+            className="absolute text-xs text-white p-2 rounded-md shadow"
+            style={{
+              top: course.top,
+              left: course.left,
+              width: DAY_COL_WIDTH,
+              height: course.height,
+              backgroundColor: course.color,
+            }}
+          >
+            <div className="font-semibold truncate">{course.name}</div>
+            <div className="text-[11px] truncate">{course.professor}</div>
+            <div className="text-[11px] truncate">
+              {course.startTime}:00 · {course.duration}교시
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+// --- [ TimetableGrid 컴포넌트 끝 ] --------------------------------------------
 
 interface TimetableEditSectionProps {
   currentSemester: string;
@@ -62,15 +235,21 @@ export const TimetableEditSection: React.FC<TimetableEditSectionProps> = ({
 
   const selectedCoursesForSemester = localSelected[currentSemester] ?? [];
 
-  const selectedPreviewCourses: PreviewCourse[] = useMemo(
-    () => (tabCourses[activeTab] ?? selectedCoursesForSemester).map(toPreviewCourse),
-    [tabCourses, activeTab, selectedCoursesForSemester],
-  );
+  // ** 1. TimetableGrid에 전달할 최종 강의 목록 계산 (선택된 강의 + 호버된 강의) **
+  const coursesForGrid: TimetableCourse[] = useMemo(() => {
+    const selected = selectedCoursesForSemester.map(toTimetableCourse);
+    
+    // 호버된 강의가 있고, 아직 선택 목록에 없다면 추가하여 미리보기를 제공
+    if (hoveredCourse && !selectedCoursesForSemester.some((c) => c.id === hoveredCourse.id)) {
+      // *주의: 호버된 강의를 시각적으로 구분하려면 toTimetableCourse 함수나 
+      // TimetableGrid 내부에서 색상/스타일을 조정해야 합니다.
+      return [...selected, toTimetableCourse(hoveredCourse)];
+    }
+    return selected;
+  }, [selectedCoursesForSemester, hoveredCourse]);
 
-  const hoveredPreviewCourse: PreviewCourse | null = useMemo(
-    () => (hoveredCourse ? toPreviewCourse(hoveredCourse) : null),
-    [hoveredCourse],
-  );
+  // ** 2. 시간 슬롯 배열 계산 **
+  const timeSlots = useMemo(() => Array.from({ length: SLOT_COUNT }, (_, i) => START_HOUR + i), []);
 
   const handleSave = () => {
     onSaveSemesterCourses(currentSemester, selectedCoursesForSemester);
@@ -118,16 +297,17 @@ export const TimetableEditSection: React.FC<TimetableEditSectionProps> = ({
                 </Select>
               </div>
 
-              <TimetableOnly hoveredCourse={hoveredPreviewCourse} selectedCourses={selectedPreviewCourses} />
+              {/* ** 3. TimetableGrid 렌더링 ** */}
+              <TimetableGrid days={DAYS} timeSlots={timeSlots} slotHeight={SLOT_HEIGHT} courses={coursesForGrid} />
             </div>
 
             {/* 오른쪽: 강의 리스트 + 탭 */}
             <div className="space-y-3">
               <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabKey)}>
                 <TabsList className="mb-3 w-full flex flex-nowrap items-center">
-                  <TabsTrigger value="selected"  className="grow text-center">현재 학기</TabsTrigger>
-                  <TabsTrigger value="custom"  className="grow text-center">사용자 지정</TabsTrigger>
-                  <TabsTrigger value="system"  className="grow text-center">시스템 기반</TabsTrigger>
+                  <TabsTrigger value="selected" className="grow text-center">현재 학기</TabsTrigger>
+                  <TabsTrigger value="custom" className="grow text-center">사용자 지정</TabsTrigger>
+                  <TabsTrigger value="system" className="grow text-center">시스템 기반</TabsTrigger>
                   <TabsTrigger value="graduation" className="grow text-center">졸업요건 기반</TabsTrigger>
                 </TabsList>
 

@@ -22,6 +22,7 @@ const baseCourses: Record<string, TimetableCourseStandard> = {
   t10: { id: 't10', name: '소프트웨어공학', professor: '최동욱', credits: 3, day: 1, periodStart: 4, periodDuration: 3, colorClass: 'bg-blue-300' },
   t11: { id: 't11', name: '컴파일러', professor: '한지민', credits: 3, day: 2, periodStart: 8, periodDuration: 2, colorClass: 'bg-emerald-400' },
   t12: { id: 't12', name: '모바일프로그래밍', professor: '임태훈', credits: 3, day: 4, periodStart: 1, periodDuration: 3, colorClass: 'bg-yellow-300' },
+  t13: { id: 't13', name: '임시강의', professor: '월공강', credits: 3, day: 0, periodStart: 1, periodDuration: 2, colorClass: 'bg-yellow-300' },
 };
 
 const pick = (ids: string[]) => ids.map((id) => baseCourses[id]).filter(Boolean) as TimetableCourseStandard[];
@@ -35,7 +36,7 @@ export const mockCoursesBySemester: Record<string, TimetableCourseStandard[]> = 
 export const coursesByTab: Record<CourseTab, TimetableCourseStandard[]> = {
   custom: pick(['t1', 't2', 't3', 't4']),
   system: pick(['t5', 't6', 't7', 't8']),
-  graduation: pick(['t9', 't10', 't11', 't12']),
+  graduation: pick(['t9', 't10', 't11', 't12', 't13']),
 };
 
 export const mockUserDefinedCourses: CourseListItem[] = [

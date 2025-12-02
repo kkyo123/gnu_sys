@@ -36,6 +36,7 @@ class EnrollmentUpdate(BaseModel):
 class EnrollmentPublic(EnrollmentBase):
     id: str
     student_id: str
+    category: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -58,6 +59,7 @@ def _to_public(doc: dict) -> EnrollmentPublic:
         grade=doc.get("grade"),
         grade_point=doc.get("grade_point"),
         credits=doc.get("credits"),
+        category=doc.get("category"),
         created_at=doc.get("created_at") or now_iso(),
         updated_at=doc.get("updated_at") or now_iso(),
     )
@@ -113,6 +115,8 @@ async def create_enrollment(
     doc = payload.model_dump(exclude_unset=True)
     doc["student_id"] = user["student_id"]
     doc["credits"] = credits
+    if course.get("category"):
+        doc["category"] = course["category"]
     now = now_iso()
     doc["created_at"] = now
     doc["updated_at"] = now

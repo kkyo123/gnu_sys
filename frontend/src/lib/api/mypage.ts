@@ -54,6 +54,7 @@ export interface EnrollmentItem {
   year: number;
   semester: number;
   status: string;
+  category?: string | null;
   grade?: string | null;
   grade_point?: number | null;
   credits?: number | null;

@@ -8,7 +8,7 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { login, me } from '../../lib/api/auth';
 
 interface LoginPageProps {
-  onLogin: (userData: any) => void;
+  onLogin: (userData: any, token: string) => void;
   onSignup: () => void;
 }
 
@@ -25,9 +25,9 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const token = await login(identifier, password);
-      const profile = await me(token.access_token);
-      onLogin(profile);
+      const tokenResponse = await login(identifier, password);
+      const profile = await me(tokenResponse.access_token);
+      onLogin(profile, tokenResponse.access_token);
     } catch (err: any) {
       const raw = String(err?.message || '');
       let message = '로그인에 실패했습니다';

@@ -21,13 +21,16 @@ interface MyPageProps {
   academicData?: AcademicData;
   timetableCourses?: TimetableCourseStandard[];
   keywordPrefs?: KeywordPrefs;
+  token?: string | null;
 }
 
 export default function Mypage({
   user = mockUser,
   academicData = mockAcademicData,
   keywordPrefs = mockKeywordPrefs,
+  token,
 }: Omit<MyPageProps, 'timetableCourses'>) {
+  void token; // placeholder until API integration replaces mock data
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
   const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false);
   const [, setIsProfileEditOpen] = useState(false);

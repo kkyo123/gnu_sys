@@ -16,13 +16,15 @@ type User = any;
 
 function AppInner({
   user,
+  token,
   isLoggedIn,
   onLogin,
   onLogout,
 }: {
   user: User | null;
+  token: string | null;
   isLoggedIn: boolean;
-  onLogin: (u: User) => void;
+  onLogin: (u: User, token: string | null) => void;
   onLogout: () => void;
 }) {
   const navigate = useNavigate();
@@ -84,8 +86,8 @@ function AppInner({
           path="/login"
           element={
             <LoginPage
-              onLogin={(u: User) => {
-                onLogin(u);
+              onLogin={(u: User, authToken: string) => {
+                onLogin(u, authToken);
                 navigate('/');
               }}
               onSignup={() => navigate('/signup')}
@@ -97,7 +99,7 @@ function AppInner({
           element={
             <SignupPage
               onLogin={(u: User) => {
-                onLogin(u);
+                onLogin(u, null);
                 navigate('/');
               }}
               onBack={() => navigate('/login')}
@@ -114,7 +116,10 @@ function AppInner({
         <Route path="/search" element={isLoggedIn ? <Search /> : <Navigate to="/login" replace />} />
         <Route path="/recommendation" element={isLoggedIn ? <Recommend /> : <Navigate to="/login" replace />} />
         <Route path="/graduation" element={isLoggedIn ? <Graduation /> : <Navigate to="/login" replace />} />
-        <Route path="/mypage" element={isLoggedIn ? <Mypage /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/mypage"
+          element={isLoggedIn ? <Mypage token={token || undefined} /> : <Navigate to="/login" replace />}
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -125,20 +130,23 @@ function AppInner({
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const handleLogin = (userData: User) => {
+  const handleLogin = (userData: User, authToken: string | null) => {
     setUser(userData);
-    setIsLoggedIn(true);
+    setToken(authToken);
+    setIsLoggedIn(Boolean(authToken));
   };
 
   const handleLogout = () => {
     setUser(null);
+    setToken(null);
     setIsLoggedIn(false);
   };
 
   return (
     <BrowserRouter>
-      <AppInner user={user} isLoggedIn={isLoggedIn} onLogin={handleLogin} onLogout={handleLogout} />
+      <AppInner user={user} token={token} isLoggedIn={isLoggedIn} onLogin={handleLogin} onLogout={handleLogout} />
     </BrowserRouter>
   );
 }

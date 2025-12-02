@@ -47,6 +47,20 @@ export interface SemesterGPAResponse {
   semesters: SemesterGPAItem[];
 }
 
+export interface EnrollmentItem {
+  id: string;
+  student_id: string;
+  course_code: string;
+  year: number;
+  semester: number;
+  status: string;
+  grade?: string | null;
+  grade_point?: number | null;
+  credits?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function getCreditSummary(token: string): Promise<CreditSummaryResponse> {
   return request('/mypage/credit-summary', {
     method: 'GET',
@@ -89,6 +103,13 @@ export async function addKeyword(token: string, keyword: string): Promise<{ mess
 export async function deleteKeyword(token: string, keyword: string): Promise<{ message: string }> {
   return request(`/mypage/keywords/${encodeURIComponent(keyword)}`, {
     method: 'DELETE',
+    headers: authHeaders(token),
+  });
+}
+
+export async function getMyEnrollments(token: string): Promise<EnrollmentItem[]> {
+  return request('/me/enrollments', {
+    method: 'GET',
     headers: authHeaders(token),
   });
 }

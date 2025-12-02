@@ -4,6 +4,7 @@ from database import connection
 from routers import courses, evaluations, requirements
 from routers import auth, users
 from routers import enrollments, dashboard, graduation
+from routers import mypage
 
 
 app = FastAPI(title="gnu_sys")
@@ -26,6 +27,7 @@ app.include_router(requirements.router, prefix="/requirements", tags=["Requireme
 app.include_router(enrollments.router, prefix="", tags=["Enrollments"]) # 수강 신청 관련
 app.include_router(dashboard.router,   prefix="", tags=["Dashboard"]) # 대시보드 관련
 app.include_router(graduation.router, prefix="/graduation", tags=["Graduation"]) # 졸업 관리
+app.include_router(mypage.router,     prefix="/mypage", tags=["MyPage"]) # 마이페이지 관련
 
 
 @app.on_event("startup")

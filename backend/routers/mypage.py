@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict
-from database.connection import db
+from database.connection import get_db
 from routers.auth import get_current_user
 
 router = APIRouter(tags=["MyPage"])
@@ -28,25 +28,52 @@ class CreditSummaryResponse(BaseModel):
     elective: CreditSummaryItem
     radar: List[RadarItem]
 
-
 @router.get("/credit-summary", response_model=CreditSummaryResponse)
 async def get_credit_summary(user=Depends(get_current_user)):
-    # 학생 정보
+    db = get_db()
+
+    # 1) 학생 정보 조회
     student = await db.students.find_one({"student_id": user["student_id"]})
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        # 학생 문서가 아직 없으면 0으로 채운 기본 응답 반환
+        zero_item = CreditSummaryItem(acquired=0, required=0)
+        radar = [
+            RadarItem(label="전공",   rate=0.0),
+            RadarItem(label="교양",   rate=0.0),
+            RadarItem(label="선택",   rate=0.0),
+        ]
+        return CreditSummaryResponse(
+            total=zero_item,
+            major=zero_item,
+            general=zero_item,
+            elective=zero_item,
+            radar=radar,
+        )
 
     version = student.get("requirement_version")
     if not version:
-        raise HTTPException(status_code=400, detail="requirement_version not set")
+        # requirement_version 이 없을 때도 0으로 응답 (원하면 여기도 에러로 바꿀 수 있음)
+        zero_item = CreditSummaryItem(acquired=0, required=0)
+        radar = [
+            RadarItem(label="전공",   rate=0.0),
+            RadarItem(label="교양",   rate=0.0),
+            RadarItem(label="선택",   rate=0.0),
+        ]
+        return CreditSummaryResponse(
+            total=zero_item,
+            major=zero_item,
+            general=zero_item,
+            elective=zero_item,
+            radar=radar,
+        )
 
-    # 졸업요건 로드
-    reqs = {}
+    # 2) 졸업요건 로드
+    reqs: Dict[str, dict] = {}
     cursor = db.requirements.find({"requirement_version": version})
     async for r in cursor:
         reqs[r["category"]] = r
 
-    # 이수 과목 집계
+    # 3) 이수 과목 집계
     enrolls = await db.enrollments.find(
         {"student_id": user["student_id"], "status": "COMPLETED"}
     ).to_list(None)
@@ -73,7 +100,7 @@ async def get_credit_summary(user=Depends(get_current_user)):
     total_req = req("TOTAL") or req("MAJOR") + req("GENERAL") + req("ELECTIVE")
     total_acc = acquired["MAJOR"] + acquired["GENERAL"] + acquired["ELECTIVE"]
 
-    radar = []
+    radar: List[RadarItem] = []
     for cat, label in [("MAJOR", "전공"), ("GENERAL", "교양"), ("ELECTIVE", "선택")]:
         r = req(cat)
         a = acquired[cat]
@@ -85,7 +112,7 @@ async def get_credit_summary(user=Depends(get_current_user)):
         major=CreditSummaryItem(acquired=acquired["MAJOR"], required=req("MAJOR")),
         general=CreditSummaryItem(acquired=acquired["GENERAL"], required=req("GENERAL")),
         elective=CreditSummaryItem(acquired=acquired["ELECTIVE"], required=req("ELECTIVE")),
-        radar=radar
+        radar=radar,
     )
 
 
@@ -103,6 +130,7 @@ class RequiredCoursesResponse(BaseModel):
 
 @router.get("/required-courses", response_model=RequiredCoursesResponse)
 async def get_required_courses(user=Depends(get_current_user)):
+    db = get_db()
     # 전공필수 = courses.is_required == True
     cursor = db.courses.find({"is_required": True})
     required = [c async for c in cursor]
@@ -141,6 +169,7 @@ class SemesterGPAResponse(BaseModel):
 
 @router.get("/semester-gpa", response_model=SemesterGPAResponse)
 async def get_semester_gpa(user=Depends(get_current_user)):
+    db = get_db()
     pipeline = [
         {
             "$match": {
@@ -184,6 +213,7 @@ async def get_semester_gpa(user=Depends(get_current_user)):
 
 @router.get("/keywords", response_model=List[str])
 async def get_keywords(user=Depends(get_current_user)):
+    db = get_db()
     stu = await db.students.find_one({"student_id": user["student_id"]})
     return stu.get("keywords", [])
 
@@ -194,6 +224,7 @@ class KeywordAdd(BaseModel):
 
 @router.post("/keywords", response_model=dict)
 async def add_keyword(payload: KeywordAdd, user=Depends(get_current_user)):
+    db = get_db()
     kw = payload.keyword.strip()
 
     await db.students.update_one(
@@ -205,6 +236,7 @@ async def add_keyword(payload: KeywordAdd, user=Depends(get_current_user)):
 
 @router.delete("/keywords/{keyword}", response_model=dict)
 async def delete_keyword(keyword: str, user=Depends(get_current_user)):
+    db = get_db()
     await db.students.update_one(
         {"student_id": user["student_id"]},
         {"$pull": {"keywords": keyword}}

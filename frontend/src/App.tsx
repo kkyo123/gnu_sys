@@ -118,7 +118,7 @@ function AppInner({
         <Route path="/graduation" element={isLoggedIn ? <Graduation /> : <Navigate to="/login" replace />} />
         <Route
           path="/mypage"
-          element={isLoggedIn ? <Mypage token={token} /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Mypage token={token} user={user} /> : <Navigate to="/login" replace />}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

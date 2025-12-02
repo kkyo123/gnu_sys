@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, Literal, List
 from bson import ObjectId
 
-from database.connection import db, now_iso
+from database.connection import get_db, now_iso
 from routers.auth import get_current_user
 
 router = APIRouter(tags=["Enrollments"])
@@ -39,11 +39,29 @@ class EnrollmentPublic(EnrollmentBase):
     created_at: str
     updated_at: str
 
+def _normalize_status(raw: Optional[str]) -> EnrollmentStatus:
+    if raw == "ENROLLED":
+        return "IN_PROGRESS"   # 기존 seed 데이터 보정
+    if raw in ("PLANNED", "IN_PROGRESS", "COMPLETED"):
+        return raw
+    return "IN_PROGRESS"       # 기본값
+
 
 def _to_public(doc: dict) -> EnrollmentPublic:
-    doc = doc.copy()
-    doc["id"] = str(doc.pop("_id"))
-    return EnrollmentPublic(**doc)
+    return EnrollmentPublic(
+        id=str(doc.get("_id", "")),
+        student_id=str(doc.get("student_id", "")),
+        course_code=str(doc.get("course_code", "")),  # int → str 변환
+        year=int(doc.get("year", 0)),
+        semester=int(doc.get("semester", 1)),
+        status=_normalize_status(doc.get("status")),
+        grade=doc.get("grade"),
+        grade_point=doc.get("grade_point"),
+        credits=doc.get("credits"),
+        created_at=doc.get("created_at") or now_iso(),
+        updated_at=doc.get("updated_at") or now_iso(),
+    )
+
 
 
 @router.get(
@@ -57,6 +75,7 @@ async def list_my_enrollments(
     semester: Optional[int] = Query(None),
     user=Depends(get_current_user),
 ):
+    db = get_db()
     q: dict = {"student_id": user["student_id"]}
     if status:
         q["status"] = status
@@ -83,6 +102,7 @@ async def create_enrollment(
     payload: EnrollmentCreate,
     user=Depends(get_current_user),
 ):
+    db = get_db()
     # 과목 존재 여부 확인
     course = await db.courses.find_one({"course_code": payload.course_code})
     if not course:
@@ -112,6 +132,7 @@ async def update_enrollment(
     payload: EnrollmentUpdate,
     user=Depends(get_current_user),
 ):
+    db = get_db()
     updates = payload.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No changes")
@@ -143,6 +164,7 @@ async def delete_enrollment(
     enrollment_id: str,
     user=Depends(get_current_user),
 ):
+    db = get_db()
     try:
         oid = ObjectId(enrollment_id)
     except Exception:

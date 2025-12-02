@@ -38,7 +38,7 @@ interface MyPageProps {
 
 export default function Mypage({
   token,
-  user = mockUser,
+  user,
   academicData = mockAcademicData,
   keywordPrefs = mockKeywordPrefs,
 }: MyPageProps) {

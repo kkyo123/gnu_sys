@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Calendar, Target, TrendingUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '../../types/mypage';
@@ -9,6 +9,8 @@ import { mockUser, mockAcademicData, mockKeywordPrefs } from './userData';
 import { mockCoursesBySemester } from './courseData';
 import { toMainTimetable } from './courseTransforms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { getCreditSummary, getKeywords } from '../../lib/api/mypage';
+import { mapCreditSummaryToAcademicData, mapKeywordsToPrefs } from './dataTransforms';
 import {
   DEFAULT_SELECTED_SEMESTER,
   MYPAGE_SECTION_IDS,
@@ -17,20 +19,24 @@ import {
 } from './config';
 
 interface MyPageProps {
+  token: string | null;
   user?: MyPageUser;
   academicData?: AcademicData;
   timetableCourses?: TimetableCourseStandard[];
   keywordPrefs?: KeywordPrefs;
-  token?: string | null;
 }
 
 export default function Mypage({
+  token,
   user = mockUser,
   academicData = mockAcademicData,
   keywordPrefs = mockKeywordPrefs,
-  token,
-}: Omit<MyPageProps, 'timetableCourses'>) {
-  void token; // placeholder until API integration replaces mock data
+}: MyPageProps) {
+  const [academicDataState, setAcademicDataState] = useState<AcademicData | null>(null);
+  const [keywordPrefsState, setKeywordPrefsState] = useState<KeywordPrefs | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(token));
+  const [error, setError] = useState<string | null>(null);
+  const canFetch = Boolean(token);
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
   const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false);
   const [, setIsProfileEditOpen] = useState(false);
@@ -43,6 +49,49 @@ export default function Mypage({
   const creditOverviewRef = useRef<HTMLElement>(null);
   const timetableRef = useRef<HTMLElement>(null);
   const preferencesRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!canFetch || !token) {
+      setIsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [creditSummary, keywords] = await Promise.all([
+          getCreditSummary(token),
+          getKeywords(token),
+        ]);
+        if (cancelled) return;
+        setAcademicDataState(mapCreditSummaryToAcademicData(creditSummary));
+        setKeywordPrefsState(mapKeywordsToPrefs(keywords));
+      } catch (err) {
+        if (cancelled) return;
+        // eslint-disable-next-line no-console
+        console.error('[mypage] failed to load data', err);
+        setError('마이페이지 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [canFetch, token]);
+
+  const creditData = academicDataState ?? academicData;
+  const keywordData = keywordPrefsState ?? keywordPrefs;
+
+  if (!token) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">인증 정보가 없어 마이페이지를 불러올 수 없습니다.</p>
+      </main>
+    );
+  }
 
   const scrollToSection = (id: MyPageSectionId) => {
     const refMap: Record<MyPageSectionId, React.RefObject<HTMLElement>> = {
@@ -64,8 +113,8 @@ export default function Mypage({
         <aside>
           <MyPageSidebar
             user={user}
-            academicData={academicData}
-            selectedKeywords={keywordPrefs.selected}
+            academicData={creditData}
+            selectedKeywords={keywordData.selected}
             scrollToSection={scrollToSection}
             setIsProfileEditOpen={setIsProfileEditOpen}
             setIsKeywordEditOpen={setIsKeywordEditOpen}
@@ -82,7 +131,8 @@ export default function Mypage({
               <TrendingUp className="w-6 h-6 text-primary" />
               학점 이수 현황
             </h2>
-            <CreditOverview academicData={academicData} />
+            <CreditOverview academicData={creditData} />
+            {isLoading && <p className="text-sm text-muted-foreground">학점 정보를 불러오는 중입니다...</p>}
           </section>
 
           <section ref={timetableRef} id={MYPAGE_SECTION_IDS.timetable} className="space-y-3 my-3">
@@ -132,7 +182,9 @@ export default function Mypage({
               <Target className="h-6 w-6 text-primary" />
               선호 키워드 관리
             </h2>
-            <KeywordPreferences prefs={keywordPrefs} onEdit={() => setIsKeywordEditOpen(true)} />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            {!error && isLoading && <p className="text-sm text-muted-foreground">키워드 정보를 불러오는 중입니다...</p>}
+            <KeywordPreferences prefs={keywordData} onEdit={() => setIsKeywordEditOpen(true)} />
           </section>
         </section>
       </div>

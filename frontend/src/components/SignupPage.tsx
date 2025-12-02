@@ -131,7 +131,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="major">전공</Label>
-                  <Select value={formData.major} onValueChange={(value) => handleInputChange('major', value)}>
+                  <Select value={formData.major} onValueChange={(value: string) => handleInputChange('major', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="전공 선택" />
                     </SelectTrigger>
@@ -146,7 +146,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="semester">학기</Label>
-                  <Select value={formData.semester} onValueChange={(value) => handleInputChange('semester', value)}>
+                  <Select value={formData.semester} onValueChange={(value: string) => handleInputChange('semester', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="학기" />
                     </SelectTrigger>
@@ -230,7 +230,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                 <Checkbox 
                   id="terms" 
                   checked={agreeTerms}
-                  onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
+                  onCheckedChange={(checked: boolean) => setAgreeTerms(checked as boolean)}
                 />
                 <Label htmlFor="terms" className="text-sm">
                   이용약관 및 개인정보처리방침에 동의합니다

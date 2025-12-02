@@ -1,16 +1,233 @@
 import React, { useState } from 'react';
-import { Search, X, Filter, Star, ChevronRight, Sparkles, BookOpen, Users, FileText, Award, Clock, MapPin, User } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { Input } from '../../components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
-import { Separator } from '../../components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search,
+  X,
+  Filter,
+  Sparkles,
+  BookOpen,
+  FileText,
+  Award,
+  Clock,
+  User,
+} from 'lucide-react';
 
-interface CourseRecommendationProps {}
+// ======================= DATA ===========================
 
-export function CourseRecommendation({}: CourseRecommendationProps = {}) {
+const keywordCategories = [
+  {
+    title: '수업 방식',
+    keywords: [
+      'PPT강의',
+      '토론',
+      '조별활동',
+      '코딩실습',
+      '이론중심',
+      '실험',
+      '발표',
+      '온라인강의',
+      '오프라인강의',
+      '영상강의',
+      '참여형',
+    ],
+  },
+  {
+    title: '평가 방식',
+    keywords: [
+      '시험없음',
+      '리포트',
+      '프로젝트',
+      '출석중요',
+      '객관식',
+      '주관식',
+      '개인과제',
+      '팀과제',
+      '과제많음',
+    ],
+  },
+  { title: '난이도', keywords: ['난이도쉬움', '난이도높음'] },
+  { title: '기술/언어', keywords: ['HTML', 'CSS', 'JavaScript', 'React', 'Python', 'SQL'] },
+];
+
+const curatedSections = [
+  {
+    id: 'intro-ai',
+    title: '비전공자도 쉽게 배우는 AI 및 코딩 초급 입문 강의',
+    courses: [
+      {
+        id: 1,
+        name: '소프트웨어입문',
+        professor: '김철수',
+        credits: 3,
+        time: '월3,수3',
+        department: '전공선택',
+        badges: ['전공선택', '전공선택'],
+        tags: ['키워드', '키워드', '키워드', '키워드', '키워드'],
+        rating: 4.5,
+        students: 120,
+      },
+      {
+        id: 2,
+        name: '인공지능의이해',
+        professor: '이영희',
+        credits: 3,
+        time: '화2,목2',
+        department: '전공선택',
+        badges: ['전공선택', '전공선택'],
+        tags: ['키워드', '키워드', '키워드', '키워드', '키워드'],
+        rating: 4.2,
+        students: 98,
+      },
+      {
+        id: 3,
+        name: '파이썬프로그래밍',
+        professor: '박민수',
+        credits: 3,
+        time: '금1,금2',
+        department: '전공선택',
+        badges: ['전공선택', '전공선택'],
+        tags: ['키워드', '키워드', '키워드', '키워드', '키워드'],
+        rating: 4.8,
+        students: 210,
+      },
+      {
+        id: 4,
+        name: '데이터과학기초',
+        professor: '최지우',
+        credits: 3,
+        time: '월1,수1',
+        department: '전공선택',
+        badges: ['전공선택', '전공선택'],
+        tags: ['키워드', '키워드', '키워드', '키워드', '키워드'],
+        rating: 4.0,
+        students: 85,
+      },
+    ],
+  },
+  {
+    id: 'web-dev',
+    title: '웹 개발 기초부터 실전까지',
+    courses: [
+      {
+        id: 5,
+        name: '웹프로그래밍',
+        professor: '정수학',
+        credits: 3,
+        time: '화4,목4',
+        department: '전공필수',
+        badges: ['전공필수', '전공선택'],
+        tags: ['HTML', 'CSS', 'JS'],
+        rating: 4.6,
+        students: 150,
+      },
+      {
+        id: 6,
+        name: '프론트엔드실습',
+        professor: '오경영',
+        credits: 3,
+        time: '수5,금5',
+        department: '전공선택',
+        badges: ['전공선택', '실습'],
+        tags: ['React', 'Vue'],
+        rating: 4.9,
+        students: 200,
+      },
+      {
+        id: 7,
+        name: '백엔드기초',
+        professor: '강선생',
+        credits: 3,
+        time: '목5,목6',
+        department: '전공선택',
+        badges: ['전공선택', '이론'],
+        tags: ['Node.js', 'DB'],
+        rating: 4.3,
+        students: 110,
+      },
+      {
+        id: 8,
+        name: '풀스택프로젝트',
+        professor: '조혜진',
+        credits: 3,
+        time: '월5,수5',
+        department: '전공선택',
+        badges: ['전공선택', '프로젝트'],
+        tags: ['배포', '클라우드'],
+        rating: 4.7,
+        students: 90,
+      },
+    ],
+  },
+  {
+    id: 'design',
+    title: '디자인 감각을 키우는 교양 강의',
+    courses: [
+      {
+        id: 9,
+        name: '디자인씽킹',
+        professor: '홍길동',
+        credits: 2,
+        time: '금3,금4',
+        department: '교양선택',
+        badges: ['교양선택', '팀플'],
+        tags: ['창의성', '기획'],
+        rating: 4.4,
+        students: 130,
+      },
+      {
+        id: 10,
+        name: '색채학',
+        professor: '신사임',
+        credits: 2,
+        time: '월2,수2',
+        department: '교양선택',
+        badges: ['교양선택', '이론'],
+        tags: ['색채', '예술'],
+        rating: 4.1,
+        students: 70,
+      },
+      {
+        id: 11,
+        name: 'UX/UI개론',
+        professor: '장영실',
+        credits: 3,
+        time: '화5,목5',
+        department: '전공선택',
+        badges: ['전공선택', '실습'],
+        tags: ['사용자경험', '인터페이스'],
+        rating: 4.5,
+        students: 180,
+      },
+      {
+        id: 12,
+        name: '영상제작기초',
+        professor: '김유신',
+        credits: 3,
+        time: '수1,수2',
+        department: '교양선택',
+        badges: ['교양선택', '실습'],
+        tags: ['영상', '편집'],
+        rating: 4.8,
+        students: 220,
+      },
+    ],
+  },
+];
+
+const SEMESTER_OPTIONS = [
+  '2021년 1학기',
+  '2021년 2학기',
+  '2022년 1학기',
+  '2022년 2학기',
+  '2023년 1학기',
+  '2023년 2학기',
+  '2024년 1학기',
+  '2024년 2학기',
+  '2025년 1학기',
+];
+
+// ======================= MAIN COMPONENT ===========================
+
+export default function CourseRecommendation() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [tempSelectedKeywords, setTempSelectedKeywords] = useState<string[]>([]);
@@ -19,85 +236,20 @@ export function CourseRecommendation({}: CourseRecommendationProps = {}) {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const keywordCategories = [
-    { title: '수업 방식', keywords: ['PPT강의', '토론', '조별활동', '코딩실습', '이론중심', '실험', '발표', '온라인강의', '오프라인강의', '영상강의', '참여형', '질문중심', '사례중심', '실습많음', '비주얼중심', '시사중심'] },
-    { title: '평가 방식', keywords: ['시험없음', '리포트', '프로젝트', '출석중요', '객관식', '주관식', '개인과제', '팀과제', '과제많음', '시험중심'] },
-    { title: '난이도', keywords: ['난이도쉬움', '난이도높음'] },
-    { title: '기술/언어', keywords: ['HTML', 'CSS', 'JavaScript', 'React', 'TypeScript', 'Python', 'SQL', 'ReactNative', '코딩', '네트워크', '암호화'] },
-  ];
+  const [toastMessage, setToastMessage] = useState('');
+  const [showSemesterSelect, setShowSemesterSelect] = useState(false);
+  const [selectedSemester, setSelectedSemester] = useState<string | null>(null);
 
-  const curatedSections = [
-    {
-      id: 'trending',
-      title: '🔥 이번 주 인기 강의',
-      color: 'text-orange-600',
-      courses: [
-        { id: 7, name: '글쓰기와 표현', professor: '조혜진', department: '교양', rating: 4.9, students: 305, tags: ['리포트', '참여형', 'PPT강의'], thumbnail: '✍️', color: 'bg-blue-100 dark:bg-blue-950', reviewCount: 305 },
-        { id: 20, name: '프론트엔드 개발 실습', professor: '최나윤', department: '전공', rating: 4.9, students: 201, tags: ['React', 'TypeScript', '프로젝트'], thumbnail: '💻', color: 'bg-purple-100 dark:bg-purple-950', reviewCount: 201 },
-        { id: 15, name: '언어와 인간', professor: '정가은', department: '교양', rating: 4.9, students: 276, tags: ['토론', '참여형', 'PPT강의'], thumbnail: '💬', color: 'bg-green-100 dark:bg-green-950', reviewCount: 276 },
-        { id: 8, name: '인공지능개론', professor: '박찬우', department: '전공', rating: 4.5, students: 188, tags: ['Python', '프로젝트', '난이도높음'], thumbnail: '🤖', color: 'bg-orange-100 dark:bg-orange-950', reviewCount: 188 },
-        { id: 16, name: '모바일 앱 개발', professor: '홍기훈', department: '전공', rating: 4.8, students: 154, tags: ['ReactNative', '프로젝트', '실습많음'], thumbnail: '📱', color: 'bg-pink-100 dark:bg-pink-950', reviewCount: 154 },
-      ],
-    },
-    {
-      id: 'presentation',
-      title: '🧠 PPT 발표가 쉬워지는 강의',
-      color: 'text-blue-600',
-      courses: [
-        { id: 1, name: '창의적 사고와 문제해결', professor: '김지훈', department: '교양', rating: 4.7, students: 124, tags: ['토론', '조별활동', 'PPT강의'], thumbnail: '💡', color: 'bg-pink-100 dark:bg-pink-950', reviewCount: 124 },
-        { id: 12, name: '컴퓨터그래픽스', professor: '오지훈', department: '전공', rating: 4.7, students: 133, tags: ['프로젝트', 'PPT강의', '비주얼중심'], thumbnail: '🎨', color: 'bg-teal-100 dark:bg-teal-950', reviewCount: 133 },
-        { id: 7, name: '글쓰기와 표현', professor: '조혜진', department: '교양', rating: 4.9, students: 305, tags: ['리포트', '참여형', 'PPT강의'], thumbnail: '✍️', color: 'bg-yellow-100 dark:bg-yellow-950', reviewCount: 305 },
-        { id: 15, name: '언어와 인간', professor: '정가은', department: '교양', rating: 4.9, students: 276, tags: ['토론', '참여형', 'PPT강의'], thumbnail: '💬', color: 'bg-indigo-100 dark:bg-indigo-950', reviewCount: 276 },
-      ],
-    },
-    {
-      id: 'discussion',
-      title: '💬 토론이 많은 수업',
-      color: 'text-purple-600',
-      courses: [
-        { id: 11, name: '철학의 이해', professor: '김영민', department: '교양', rating: 4.6, students: 190, tags: ['토론', '참여형', '리포트'], thumbnail: '🤔', color: 'bg-indigo-100 dark:bg-indigo-950', reviewCount: 190 },
-        { id: 5, name: '미디어와 사회', professor: '윤하영', department: '교양', rating: 4.6, students: 98, tags: ['토론', '리포트', '참여형'], thumbnail: '📺', color: 'bg-red-100 dark:bg-red-950', reviewCount: 98 },
-        { id: 19, name: '현대사회와 윤리', professor: '윤성호', department: '교양', rating: 4.4, students: 120, tags: ['토론', '시사중심', '리포트'], thumbnail: '⚖️', color: 'bg-cyan-100 dark:bg-cyan-950', reviewCount: 120 },
-        { id: 13, name: '글로벌 경제의 이해', professor: '박서연', department: '교양', rating: 4.5, students: 115, tags: ['시사중심', '리포트', '토론'], thumbnail: '🌍', color: 'bg-emerald-100 dark:bg-emerald-950', reviewCount: 115 },
-      ],
-    },
-    {
-      id: 'easy-exam',
-      title: '🎯 시험 부담 적은 강의',
-      color: 'text-green-600',
-      courses: [
-        { id: 3, name: '심리학의 이해', professor: '박진수', department: '교양', rating: 4.8, students: 211, tags: ['시험없음', '토론', '영상강의'], thumbnail: '🧠', color: 'bg-rose-100 dark:bg-rose-950', reviewCount: 211 },
-        { id: 9, name: '문화와 예술', professor: '이은정', department: '교양', rating: 4.3, students: 76, tags: ['영상강의', '참여형', '리포트'], thumbnail: '🎨', color: 'bg-lime-100 dark:bg-lime-950', reviewCount: 76 },
-        { id: 17, name: '문학과 인간이해', professor: '강채원', department: '교양', rating: 4.5, students: 138, tags: ['리포트', '토론', '참여형'], thumbnail: '📚', color: 'bg-violet-100 dark:bg-violet-950', reviewCount: 138 },
-        { id: 5, name: '미디어와 사회', professor: '윤하영', department: '교양', rating: 4.6, students: 98, tags: ['토론', '리포트', '참여형'], thumbnail: '📺', color: 'bg-amber-100 dark:bg-amber-950', reviewCount: 98 },
-      ],
-    },
-    {
-      id: 'coding-projects',
-      title: '💻 코딩과 프로젝트 중심 강의',
-      color: 'text-cyan-600',
-      courses: [
-        { id: 2, name: '웹프로그래밍 기초', professor: '이서연', department: '전공', rating: 4.5, students: 87, tags: ['HTML', 'CSS', 'JavaScript'], thumbnail: '🌐', color: 'bg-blue-100 dark:bg-blue-950', reviewCount: 87 },
-        { id: 4, name: '데이터베이스 시스템', professor: '최민석', department: '전공', rating: 4.4, students: 142, tags: ['SQL', '과제많음', '프로젝트'], thumbnail: '💾', color: 'bg-purple-100 dark:bg-purple-950', reviewCount: 142 },
-        { id: 20, name: '프론트엔드 개발 실습', professor: '최나윤', department: '전공', rating: 4.9, students: 201, tags: ['React', 'TypeScript', '프로젝트'], thumbnail: '⚛️', color: 'bg-cyan-100 dark:bg-cyan-950', reviewCount: 201 },
-        { id: 16, name: '모바일 앱 개발', professor: '홍기훈', department: '전공', rating: 4.8, students: 154, tags: ['ReactNative', '프로젝트', '실습많음'], thumbnail: '📱', color: 'bg-green-100 dark:bg-green-950', reviewCount: 154 },
-      ],
-    },
-    {
-      id: 'advanced-cs',
-      title: '🎓 심화 전공 강의',
-      color: 'text-red-600',
-      courses: [
-        { id: 6, name: '운영체제', professor: '정도윤', department: '전공', rating: 4.2, students: 77, tags: ['이론중심', '난이도높음', '시험중심'], thumbnail: '⚙️', color: 'bg-slate-100 dark:bg-slate-950', reviewCount: 77 },
-        { id: 14, name: '자료구조', professor: '이태훈', department: '전공', rating: 4.3, students: 97, tags: ['코딩', '이론중심', '난이도높음'], thumbnail: '🔗', color: 'bg-zinc-100 dark:bg-zinc-950', reviewCount: 97 },
-        { id: 10, name: '컴퓨터네트워크', professor: '한승우', department: '전공', rating: 4.1, students: 59, tags: ['이론중심', '코딩', '시험중심'], thumbnail: '🌐', color: 'bg-neutral-100 dark:bg-neutral-950', reviewCount: 59 },
-        { id: 18, name: '컴퓨터보안', professor: '백도현', department: '전공', rating: 4.2, students: 84, tags: ['네트워크', '암호화', '이론중심'], thumbnail: '🔒', color: 'bg-stone-100 dark:bg-stone-950', reviewCount: 84 },
-      ],
-    },
-  ];
+  const openToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 2000);
+  };
 
+  // Handlers
   const toggleKeyword = (keyword: string) => {
-    setTempSelectedKeywords(prev => prev.includes(keyword) ? prev.filter(k => k !== keyword) : [...prev, keyword]);
+    setTempSelectedKeywords((prev) =>
+      prev.includes(keyword) ? prev.filter((k) => k !== keyword) : [...prev, keyword],
+    );
   };
 
   const handleSearch = () => {
@@ -115,255 +267,364 @@ export function CourseRecommendation({}: CourseRecommendationProps = {}) {
   const handleCourseDetail = (course: any) => {
     setSelectedCourse(course);
     setIsDetailOpen(true);
+    setShowSemesterSelect(false);
+    setSelectedSemester(null);
   };
 
+  // Mock Detail Generator
   const getCourseDetails = (course: any) => ({
     ...course,
-    credits: 3,
-    time: '화목 10:30-12:00',
     location: '공학관 305',
     capacity: 50,
-    enrolled: course.students || Math.floor(Math.random() * 50),
-    prerequisites: course.id === 8 || course.id === 14 ? ['프로그래밍기초'] : [],
+    enrolled: course.students,
+    prerequisites: ['프로그래밍기초'],
     assessmentMethod: { midterm: 30, final: 30, assignment: 25, attendance: 15 },
     description: `${course.name}은 ${course.department} 학생들을 위한 강의입니다. ${course.professor} 교수님이 진행하시며, 실무 중심의 교육으로 진행됩니다.`,
-    difficulty: course.rating > 4.7 ? '쉬움' : course.rating > 4.4 ? '보통' : '어려움',
-    reviews: course.reviewCount || course.students,
+    difficulty: course.rating > 4.5 ? '쉬움' : '보통',
   });
 
-  const getFilteredCourses = () => {
-    if (selectedKeywords.length === 0 && !searchQuery) return null;
-    const allCourses = curatedSections.flatMap(section => section.courses);
-    return allCourses.filter(course => {
-      const matchesKeywords = selectedKeywords.length === 0 || selectedKeywords.some(keyword => course.tags.includes(keyword));
-      const matchesSearch = !searchQuery || course.name.toLowerCase().includes(searchQuery.toLowerCase()) || course.professor.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesKeywords && matchesSearch;
-    });
-  };
-
-  const filteredCourses = getFilteredCourses();
-
   return (
-    <div className="relative min-h-screen">
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 bg-black/20 z-40" onClick={() => setIsSidebarOpen(false)} />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 30, stiffness: 250 }} className="fixed left-0 top-0 h-full w-80 bg-background border-r z-50 overflow-y-auto">
+    <div className="min-h-screen bg-[#F9FAFB] font-sans pb-20">
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <div className="fixed left-0 top-0 h-full w-[360px] bg-white z-50 shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />키워드 선택</h3>
-                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}><X className="h-5 w-5" /></Button>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-bold text-gray-900">키워드 선택</h3>
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <X className="h-6 w-6 text-gray-500" />
+                </button>
               </div>
 
               <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="강의명, 교수명 검색..." className="pl-10" value={tempSearchQuery} onChange={(e) => setTempSearchQuery(e.target.value)} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="강의명, 교수명 검색"
+                  className="w-full h-12 pl-12 pr-4 rounded-lg bg-gray-50 border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={tempSearchQuery}
+                  onChange={(e) => setTempSearchQuery(e.target.value)}
+                />
               </div>
 
               {tempSelectedKeywords.length > 0 && (
-                <div className="mb-6 p-4 bg-muted rounded-lg">
+                <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm">선택됨 ({tempSelectedKeywords.length})</h4>
-                    <Button variant="ghost" size="sm" onClick={() => setTempSelectedKeywords([])} className="h-auto py-1 px-2 text-xs">전체 해제</Button>
+                    <span className="text-sm font-medium text-gray-500">
+                      선택됨 ({tempSelectedKeywords.length})
+                    </span>
+                    <button
+                      onClick={() => setTempSelectedKeywords([])}
+                      className="text-xs text-gray-400 underline"
+                    >
+                      전체 해제
+                    </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {tempSelectedKeywords.map((keyword) => (
-                      <button key={keyword} onClick={() => toggleKeyword(keyword)} className="px-3 py-1.5 rounded-full text-xs bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-1">#{keyword}<X className="h-3 w-3" /></button>
+                      <button
+                        key={keyword}
+                        onClick={() => toggleKeyword(keyword)}
+                        className="px-3 py-1.5 rounded-full text-sm bg-blue-600 text-white flex items-center gap-1 font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        #{keyword}
+                        <X className="h-3 w-3" />
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <Separator className="my-6" />
-
-              <div className="mb-6 space-y-6">
+              <div className="space-y-8">
                 {keywordCategories.map((category) => (
                   <div key={category.title}>
-                    <h4 className="text-sm text-muted-foreground mb-3">{category.title}</h4>
+                    <h4 className="text-sm font-bold text-gray-900 mb-3">{category.title}</h4>
                     <div className="flex flex-wrap gap-2">
                       {category.keywords.map((keyword) => (
-                        <button key={keyword} onClick={() => toggleKeyword(keyword)} className={`px-3 py-1.5 rounded-full text-xs transition-all ${tempSelectedKeywords.includes(keyword) ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'}`}>#{keyword}</button>
+                        <button
+                          key={keyword}
+                          onClick={() => toggleKeyword(keyword)}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-all font-medium ${
+                            tempSelectedKeywords.includes(keyword)
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-50 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {keyword}
+                        </button>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="sticky bottom-0 bg-background pt-4 pb-2 border-t">
-                <Button className="w-full" size="lg" onClick={handleSearch}>
-                  <Search className="h-4 w-4 mr-2" />검색하기
-                  {tempSelectedKeywords.length > 0 && (<Badge className="ml-2 bg-white/20">{tempSelectedKeywords.length}</Badge>)}
-                </Button>
+              <div className="sticky bottom-0 bg-white pt-6 pb-2">
+                <button
+                  className="w-full h-12 text-lg font-bold bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  onClick={handleSearch}
+                >
+                  검색하기
+                </button>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
 
-      <main className="container mx-auto px-4 py-6 pb-20">
-        <div className="mb-6">
-          <h1>강의 추천</h1>
-          <p className="text-muted-foreground mt-2">맞춤형 강의를 추천받아보세요</p>
+      {/* Main Content */}
+      <main className="mx-auto max-w-[1280px] px-6 py-10">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">강의 추천</h1>
+          <p className="text-gray-500 text-sm">맞춤형 강의를 추천받아보세요.</p>
         </div>
 
-        <div onClick={handleOpenSidebar} className="mb-6 cursor-pointer">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="키워드로 강의 찾기..." className="pl-10 pr-10 h-12 cursor-pointer" readOnly value={selectedKeywords.length > 0 ? `${selectedKeywords.length}개 키워드 선택됨` : ''} />
-            <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        {/* Search Bar */}
+        <div className="mb-12 cursor-pointer" onClick={handleOpenSidebar}>
+          <div className="relative flex items-center w-full h-14 bg-gray-50 rounded-lg border border-gray-100 px-4 hover:border-gray-300 transition-colors">
+            <Search className="h-5 w-5 text-gray-400 mr-3" />
+            <input
+              type="text"
+              placeholder="키워드로 강의 찾기..."
+              className="bg-transparent border-none outline-none flex-1 text-base text-gray-900 placeholder:text-gray-400 cursor-pointer"
+              readOnly
+              value={
+                selectedKeywords.length > 0
+                  ? `${selectedKeywords.length}개 키워드 선택됨`
+                  : ''
+              }
+            />
+            <Filter className="h-5 w-5 text-gray-400 ml-auto" />
           </div>
         </div>
 
-        {(selectedKeywords.length > 0 || searchQuery) && (
-          <div className="mb-6 p-4 bg-muted rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2"><Filter className="h-4 w-4" /><span className="text-sm">필터 적용 중</span></div>
-              <Button variant="ghost" size="sm" onClick={() => { setSelectedKeywords([]); setSearchQuery(''); }}>전체 초기화</Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {searchQuery && (<Badge variant="secondary" className="gap-1">검색: {searchQuery}<X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} /></Badge>)}
-              {selectedKeywords.map((keyword) => (
-                <Badge key={keyword} variant="default" className="gap-1">#{keyword}<X className="h-3 w-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedKeywords(prev => prev.filter(k => k !== keyword)); }} /></Badge>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Sections – centered cards */}
+        <div className="space-y-16">
+          {curatedSections.map((section) => (
+            <div key={section.id}>
+              <h2 className="text-lg font-bold text-gray-800 mb-6">{section.title}</h2>
 
-        {(() => {
-          const filteredCourses = ((): any[] | null => {
-            if (selectedKeywords.length === 0 && !searchQuery) return null;
-            const all = curatedSections.flatMap(s => s.courses);
-            return all.filter(c => (selectedKeywords.length === 0 || selectedKeywords.some(k => c.tags.includes(k))) && (!searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.professor.toLowerCase().includes(searchQuery.toLowerCase())));
-          })();
+              <div className="flex justify-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {section.courses.map((course) => (
+                    <div
+                      key={course.id}
+                      className="w-[280px] bg-white border border-gray-200 rounded-xl p-5 flex flex-col justify-between hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => handleCourseDetail(course)}
+                    >
+                      {/* Top: Title & Credits */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-start mb-1">
+                          <h3 className="text-lg font-bold text-gray-900 leading-tight line-clamp-1">
+                            {course.name}
+                          </h3>
+                          <div className="flex items-center text-gray-400 text-sm flex-shrink-0 ml-2">
+                            <BookOpen className="w-4 h-4 mr-1" />
+                            <span>{course.credits}학점</span>
+                          </div>
+                        </div>
 
-          if (filteredCourses === null) {
-            return (
-              <div className="space-y-8">
-                {curatedSections.map((section) => (
-                  <div key={section.id}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className={section.color}>{section.title}</h2>
-                      <Button variant="ghost" size="sm">전체보기<ChevronRight className="h-4 w-4 ml-1" /></Button>
-                    </div>
-                    <div className="relative">
-                      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-                        {section.courses.map((course, i) => (
-                          <Card key={`${section.id}-${course.id}-${i}`} className="flex-shrink-0 w-64 hover:shadow-lg transition-shadow cursor-pointer snap-start" onClick={() => handleCourseDetail(course)}>
-                            <CardContent className="pt-6">
-                              <div className={`w-full h-32 rounded-lg ${course.color} flex items-center justify-center mb-4`}>
-                                <span className="text-5xl">{course.thumbnail}</span>
-                              </div>
-                              <h3 className="mb-2 line-clamp-2">{course.name}</h3>
-                              <p className="text-sm text-muted-foreground mb-3">{course.professor} • {course.department}</p>
-                              <div className="flex items-center space-x-1 mb-3">
-                                <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                <span className="text-sm">{course.rating}</span>
-                                <span className="text-xs text-muted-foreground">({course.students.toLocaleString()}명)</span>
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {course.tags.slice(0, 3).map((tag) => (<Badge key={tag} variant="secondary" className="text-xs">#{tag}</Badge>))}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                        {/* Badges */}
+                        <div className="flex gap-2 mt-2">
+                          {course.badges.map((badge: string, i: number) => (
+                            <span
+                              key={i}
+                              className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-medium"
+                            >
+                              {badge}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Keywords */}
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {course.tags.slice(0, 3).map((tag: string, i: number) => (
+                            <span
+                              key={i}
+                              className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom: Info & Button */}
+                      <div>
+                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                          <div className="flex items-center gap-1">
+                            <User className="w-4 h-4" />
+                            {course.professor}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            시간표
+                          </div>
+                        </div>
+
+                        <button className="w-full border border-gray-200 rounded py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium">
+                          상세보기
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          return (
-            <div>
-              <div className="flex items-center justify-between mb-4"><h3>검색 결과</h3><Badge variant="secondary">{filteredCourses.length}개의 강의</Badge></div>
-              {filteredCourses.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredCourses.map((course) => (
-                    <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleCourseDetail(course)}>
-                      <CardContent className="pt-6">
-                        <div className={`w-full h-24 rounded-lg ${course.color} flex items-center justify-center mb-4`}><span className="text-4xl">{course.thumbnail}</span></div>
-                        <h4 className="mb-2 line-clamp-2">{course.name}</h4>
-                        <p className="text-sm text-muted-foreground mb-3">{course.professor} • {course.department}</p>
-                        <div className="flex items-center space-x-1 mb-3"><Star className="h-4 w-4 text-yellow-500 fill-current" /><span className="text-sm">{course.rating}</span><span className="text-xs text-muted-foreground">({course.students.toLocaleString()}명)</span></div>
-                        <div className="flex flex-wrap gap-1">{course.tags.map((tag) => (<Badge key={tag} variant={selectedKeywords.includes(tag) ? 'default' : 'secondary'} className="text-xs">#{tag}</Badge>))}</div>
-                      </CardContent>
-                    </Card>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-12"><p className="text-muted-foreground mb-4">검색 조건에 맞는 강의가 없습니다.</p><Button variant="outline" onClick={() => { setSelectedKeywords([]); setSearchQuery(''); }}>필터 초기화</Button></div>
-              )}
+              </div>
             </div>
-          );
-        })()}
+          ))}
+        </div>
       </main>
 
-      <style dangerouslySetInnerHTML={{__html: `.scrollbar-hide::-webkit-scrollbar{display:none}.scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}`}} />
+      {/* Detail Modal */}
+      {isDetailOpen && selectedCourse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsDetailOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {(() => {
+              const details = getCourseDetails(selectedCourse);
+              return (
+                <div className="flex flex-col">
+                  <div className="p-8 pb-4">
+                    {/* Header */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h2 className="text-2xl font-bold text-gray-900">{selectedCourse.name}</h2>
+                      </div>
+                      <div className="flex gap-2 items-center text-sm">
+                        <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-medium">
+                          전공필수
+                        </span>
+                        <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">
+                          교과목코드-분반
+                        </span>
+                      </div>
+                    </div>
 
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedCourse && (() => {
-            const details = getCourseDetails(selectedCourse);
-            return (
-              <>
-                <DialogHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <DialogTitle className="text-2xl mb-2">{selectedCourse.name}</DialogTitle>
-                      <DialogDescription className="flex items-center space-x-2"><Badge variant="secondary">{selectedCourse.department}</Badge><span>•</span><span>{selectedCourse.professor}</span></DialogDescription>
+                    {/* Meta Grid */}
+                    <div className="flex justify-between border-b border-gray-100 pb-6 mb-6">
+                      <div className="flex flex-col items-center flex-1 border-r border-gray-100 last:border-0">
+                        <span className="text-xs text-gray-400 mb-1">교수명</span>
+                        <div className="flex items-center gap-1 font-bold text-gray-900">
+                          <User className="w-4 h-4 text-gray-400" />
+                          {selectedCourse.professor}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center flex-1 border-r border-gray-100 last:border-0">
+                        <span className="text-xs text-gray-400 mb-1">학점</span>
+                        <div className="flex items-center gap-1 font-bold text-gray-900">
+                          <BookOpen className="w-4 h-4 text-gray-400" /> {details.credits}학점
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center flex-1">
+                        <span className="text-xs text-gray-400 mb-1">강의시간</span>
+                        <div className="flex items-center gap-1 font-bold text-gray-900">
+                          <Clock className="w-4 h-4 text-gray-400" /> {details.time}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
+                          <FileText className="w-4 h-4 text-blue-600" /> 강의 소개
+                        </h4>
+                        <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          {details.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
+                          <Sparkles className="w-4 h-4 text-blue-600" /> 연관 키워드
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedCourse.tags.map((tag: string, i: number) => (
+                            <span
+                              key={i}
+                              className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 이수 이력 학기 선택 */}
+                      {showSemesterSelect && (
+                        <div>
+                          <h4 className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
+                            <Award className="w-4 h-4 text-blue-600" /> 수강 학기 선택
+                          </h4>
+                          <select
+                            className="h-10 rounded-md border border-gray-300 px-3 text-sm w-full"
+                            value={selectedSemester ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (!value) return;
+                              setSelectedSemester(value);
+                              openToast('등록이 완료되었습니다.');
+                            }}
+                          >
+                            <option value="">학기를 선택하세요</option>
+                            {SEMESTER_OPTIONS.map((sem) => (
+                              <option key={sem} value={sem}>
+                                {sem}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </DialogHeader>
-                <div className="space-y-6 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2"><User className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm text-muted-foreground">교수명</p><p>{selectedCourse.professor}</p></div></div>
-                      <div className="flex items-center space-x-2"><BookOpen className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm text-muted-foreground">학점</p><p>{details.credits}학점</p></div></div>
-                      <div className="flex items-center space-x-2"><Star className="h-5 w-5 text-yellow-500 fill-current" /><div><p className="text-sm text-muted-foreground">평점</p><p>{selectedCourse.rating} ({details.reviews}개의 리뷰)</p></div></div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2"><Clock className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm text-muted-foreground">강의 시간</p><p>{details.time}</p></div></div>
-                      <div className="flex items-center space-x-2"><MapPin className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm text-muted-foreground">강의실</p><p>{details.location}</p></div></div>
-                      <div className="flex items-center space-x-2"><Users className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm text-muted-foreground">수강 정원</p><p>{details.enrolled}/{details.capacity}명</p></div></div>
-                    </div>
+
+                  {/* Footer */}
+                  <div className="p-6 border-t border-gray-100 flex gap-3 sticky bottom-0 bg-white">
+                    <button
+                      className="flex-1 h-12 rounded-lg border border-gray-200 font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowSemesterSelect((prev) => !prev)}
+                    >
+                      이수 이력 등록
+                    </button>
+                    <button
+                      className="flex-1 h-12 rounded-lg bg-black text-white font-bold hover:bg-gray-800 transition-colors"
+                      onClick={() => openToast('등록이 완료되었습니다.')}
+                    >
+                      관심과목
+                    </button>
                   </div>
-                  <Separator />
-                  <div><h4 className="flex items-center space-x-2 mb-2"><FileText className="h-4 w-4" /><span>강의 소개</span></h4><p className="text-muted-foreground">{details.description}</p></div>
-                  <Separator />
-                  <div><h4 className="mb-3">연관 키워드</h4><div className="flex flex-wrap gap-2">{selectedCourse.tags.map((tag: string) => (<Badge key={tag} variant="secondary" className="px-3 py-1">{tag}</Badge>))}</div></div>
-                  <Separator />
-                  {details.prerequisites.length > 0 && (<div><h4 className="mb-2">선수과목</h4><div className="flex flex-wrap gap-2">{details.prerequisites.map((prereq: string) => (<Badge key={prereq} variant="outline">{prereq}</Badge>))}</div></div>)}
-                  <div>
-                    <h4 className="flex items-center space-x-2 mb-3"><Award className="h-4 w-4" /><span>평가 방식</span></h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg"><span className="text-sm">중간고사</span><span>{details.assessmentMethod.midterm}%</span></div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg"><span className="text-sm">기말고사</span><span>{details.assessmentMethod.final}%</span></div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg"><span className="text-sm">과제</span><span>{details.assessmentMethod.assignment}%</span></div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg"><span className="text-sm">출석</span><span>{details.assessmentMethod.attendance}%</span></div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><p className="text-sm text-muted-foreground mb-1">난이도</p><Badge variant={details.difficulty === '쉬움' ? 'secondary' : details.difficulty === '보통' ? 'outline' : 'destructive'}>{details.difficulty}</Badge></div>
-                    <div><p className="text-sm text-muted-foreground mb-1">수강 가능 여부</p><Badge variant={details.enrolled < details.capacity ? 'default' : 'destructive'}>{details.enrolled < details.capacity ? '수강 가능' : '정원 마감'}</Badge></div>
-                  </div>
-                  <div className="flex space-x-2 pt-4"><Button className="flex-1">찜하기</Button><Button variant="outline" className="flex-1">강의계획서 보기</Button></div>
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setIsDetailOpen(false)}
+                    className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] rounded-md bg-white px-4 py-2 text-sm shadow-lg border border-gray-200">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
-
-export default function Recommend() {
-  return <CourseRecommendation />;
-}
-

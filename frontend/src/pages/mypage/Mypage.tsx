@@ -36,6 +36,7 @@ export default function Mypage({
   const [keywordPrefsState, setKeywordPrefsState] = useState<KeywordPrefs | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(token));
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const canFetch = Boolean(token);
   const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
   const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false);
@@ -80,7 +81,9 @@ export default function Mypage({
     return () => {
       cancelled = true;
     };
-  }, [canFetch, token]);
+  }, [canFetch, token, reloadKey]);
+
+  const handleRetry = () => setReloadKey((prev) => prev + 1);
 
   const creditData = academicDataState ?? academicData;
   const keywordData = keywordPrefsState ?? keywordPrefs;
@@ -131,8 +134,19 @@ export default function Mypage({
               <TrendingUp className="w-6 h-6 text-primary" />
               학점 이수 현황
             </h2>
-            <CreditOverview academicData={creditData} />
-            {isLoading && <p className="text-sm text-muted-foreground">학점 정보를 불러오는 중입니다...</p>}
+            {isLoading ? (
+              <div className="space-y-4 rounded-lg border border-border p-6 animate-pulse">
+                <div className="h-8 w-1/3 bg-muted rounded" />
+                <div className="h-48 bg-muted rounded" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 2 }).map((_, idx) => (
+                    <div key={idx} className="h-20 bg-muted rounded" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <CreditOverview academicData={creditData} />
+            )}
           </section>
 
           <section ref={timetableRef} id={MYPAGE_SECTION_IDS.timetable} className="space-y-3 my-3">
@@ -182,9 +196,29 @@ export default function Mypage({
               <Target className="h-6 w-6 text-primary" />
               선호 키워드 관리
             </h2>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            {!error && isLoading && <p className="text-sm text-muted-foreground">키워드 정보를 불러오는 중입니다...</p>}
-            <KeywordPreferences prefs={keywordData} onEdit={() => setIsKeywordEditOpen(true)} />
+            {error && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-2">
+                <span>{error}</span>
+                <button type="button" className="text-red-700 underline" onClick={handleRetry}>
+                  다시 시도
+                </button>
+              </div>
+            )}
+            {!error && isLoading ? (
+              <div className="rounded-lg border border-border p-6 animate-pulse space-y-4">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx}>
+                    <div className="h-4 w-32 bg-muted rounded mb-2" />
+                    <div className="flex gap-2">
+                      <div className="h-6 w-20 bg-muted rounded-full" />
+                      <div className="h-6 w-16 bg-muted rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <KeywordPreferences prefs={keywordData} onEdit={() => setIsKeywordEditOpen(true)} />
+            )}
           </section>
         </section>
       </div>

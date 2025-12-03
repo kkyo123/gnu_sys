@@ -48,6 +48,7 @@ export const graduationData: GraduationData = {
       rating: 4.2,
       prerequisite: '자료구조',
       description: '강의 주제 : #알고리즘 #데이터관리 #설계 #전공심화',
+      timeslot: '금1,2,3',
     },
     {
       id: '10024297-001',
@@ -61,6 +62,7 @@ export const graduationData: GraduationData = {
       rating: 4.0,
       prerequisite: '운영체제',
       description: '강의 주제 : #컴퓨터 #네트워크 #설계 #전공심화',
+      timeslot: '수5,6,7',
     },
     {
       id: '11024296-001',
@@ -74,6 +76,7 @@ export const graduationData: GraduationData = {
       rating: 4.5,
       prerequisite: '확률과 통계',
       description: '강의 주제 : 컴퓨터구조 #인공지능 #하드웨어 #전공심화',
+      timeslot: '화6,7,8',
     },
   ],
 };

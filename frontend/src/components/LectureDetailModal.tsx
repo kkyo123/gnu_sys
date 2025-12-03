@@ -258,7 +258,7 @@ const LectureDetailModal: React.FC<Props> = ({
           </div>
           <div className="lec-modal__info-item">
             <div className="lec-modal__info-label">강의시간</div>
-            <div className="lec-modal__info-value">{timeLabel}</div>
+            <div className="lec-modal__info-value">{course.timeslot}</div>
           </div>
         </section>
 

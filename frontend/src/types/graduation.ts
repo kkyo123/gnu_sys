@@ -48,6 +48,7 @@ export interface CourseRecommendation {
   rating?: number;
   prerequisite?: string;
   description: string;
+  timeslot?: string;
 }
 
 export interface GraduationData {

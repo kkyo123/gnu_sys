@@ -15,6 +15,10 @@ export const SEMESTER_OPTIONS: SemesterOption[] = [
   { value: '2025-1', label: '2025년 1학기' },
   { value: '2024-2', label: '2024년 2학기' },
   { value: '2024-1', label: '2024년 1학기' },
+  { value: '2023-2', label: '2023년 2학기' },
+  { value: '2023-1', label: '2023년 1학기' },
+  { value: '2022-2', label: '2022년 2학기' },
+  { value: '2022-1', label: '2022년 1학기' },
 ];
 
 export const DEFAULT_SELECTED_SEMESTER = '2025-1';

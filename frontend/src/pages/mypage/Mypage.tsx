@@ -199,80 +199,6 @@ export default function Mypage({ token, user, academicData, keywordPrefs }: MyPa
             <CreditOverviewSection token={token} onDataLoaded={(data) => setAcademicDataState(data)} />
           </section>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2">
-                <ClipboardCheck className="h-6 w-6 text-primary" />
-                전공 필수 과목
-              </h2>
-              <span className="text-sm text-muted-foreground">
-                {completedRequiredCount}/{totalRequiredCount}과목 이수
-              </span>
-            </div>
-            {requiredCoursesError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-2">
-                <span>{requiredCoursesError}</span>
-                <button type="button" className="underline" onClick={() => void refetchRequiredCourses()}>
-                  다시 시도
-                </button>
-              </div>
-            )}
-            {requiredCoursesLoading ? (
-              <div className="rounded-lg border border-border p-6 animate-pulse space-y-3">
-                {Array.from({ length: 4 }).map((_, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div className="h-4 w-24 bg-muted rounded" />
-                    <div className="h-4 flex-1 mx-4 bg-muted rounded" />
-                    <div className="h-4 w-20 bg-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <RequiredCourseList courses={requiredCourses} />
-            )}
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2">
-                <Calendar className="h-6 w-6 text-primary" />
-                수강 이력(DEBUG)
-              </h2>
-              <button
-                type="button"
-                className="text-xs text-primary underline-offset-2 hover:underline"
-                onClick={() => void refetchEnrollments()}
-              >
-                새로고침
-              </button>
-            </div>
-            {enrollmentsError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-2">
-                <span>{enrollmentsError}</span>
-                <button type="button" className="underline" onClick={() => void refetchEnrollments()}>
-                  다시 시도
-                </button>
-              </div>
-            )}
-            {enrollmentsLoading ? (
-              <div className="rounded-lg border border-border p-4 animate-pulse space-y-3">
-                {Array.from({ length: 4 }).map((_, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-sm">
-                    <div className="h-4 w-24 bg-muted rounded" />
-                    <div className="h-4 w-16 bg-muted rounded" />
-                    <div className="h-4 w-16 bg-muted rounded" />
-                    <div className="h-4 w-12 bg-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <>
-                <EnrollmentDebugTable enrollments={enrollments} studentId={user?.id} />
-                <p className="text-xs text-muted-foreground">현재 마이페이지 UI 연동 여부를 확인하기 위한 임시 표시입니다.</p>
-              </>
-            )}
-          </section>
-
           <section ref={timetableRef} id={MYPAGE_SECTION_IDS.timetable} className="space-y-3 my-3">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2">
@@ -329,7 +255,7 @@ export default function Mypage({ token, user, academicData, keywordPrefs }: MyPa
                   courses={semesterCourses}
                 />
 
-                <CourseDebugTable title={`DEBUG 강의 리스트(${selectedSemester})`} courses={selectedBySemester[selectedSemester] ?? []} />
+                
               </>
             )}
           </section>

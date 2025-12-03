@@ -181,7 +181,7 @@ def _make_status(acquired: int, required: int) -> CategoryStatus:
 # 졸업요건 현황
 # ---------------------------
 
-@router.get("/graduation/status", response_model=GraduationStatusResponse)
+@router.get("/status", response_model=GraduationStatusResponse)
 async def get_graduation_status(user=Depends(get_current_user)):
     # 학생 정보 + 졸업요건 문서 로드
     student, requirements = await _load_student_and_requirements(user["student_id"])
@@ -334,7 +334,7 @@ async def get_graduation_status(user=Depends(get_current_user)):
 # ---------------------------
 
 @router.get(
-    "/graduation/recommended-courses",
+    "/recommended-courses",
     response_model=RecommendedCoursesResponse,
     summary="졸업요건 기반 수강신청 추천 과목 목록",
 )

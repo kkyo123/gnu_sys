@@ -381,8 +381,8 @@ export default function Search() {
                     <div className="flex items-center space-x-2 mb-2">
                       <h3>{course.name}</h3>
                       {course.type && <Badge variant="secondary">{course.type}</Badge>}
-                      {course.raw?.course_code && (
-                        <span className="text-xs text-muted-foreground">· {course.raw.course_code}</span>
+                      {course.raw?.course_code && course.raw?.class && (
+                        <span className="text-xs text-muted-foreground">· {course.raw.course_code} - {course.raw.class} </span>
                       )}
                     </div>
                     <p className="text-muted-foreground text-sm mb-3">강의설명</p>
@@ -427,7 +427,11 @@ export default function Search() {
                       <DialogDescription className="flex items-center space-x-2">
                         <Badge variant="secondary">{selectedCourse.type}</Badge>
                         <span>·</span>
-                        <span>{selectedCourse.department}</span>
+                        {selectedCourse.raw?.course_code && selectedCourse.raw?.class &&(
+                          <>
+                            <span>{selectedCourse.raw.course_code} - {selectedCourse.raw.class}</span>
+                            </>
+                          )}
                         
                       </DialogDescription>
                     </div>

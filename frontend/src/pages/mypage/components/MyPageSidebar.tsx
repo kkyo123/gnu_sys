@@ -11,7 +11,7 @@ import type { KeywordGroupKey } from '../keywordConfig';
 
 interface MyPageSidebarProps {
   user?: MyPageUser | null;
-  academicData: AcademicData;
+  academicData?: AcademicData | null;
   selectedKeywords: Record<KeywordGroupKey, string[]>;
   scrollToSection: (id: MyPageSectionId) => void;
   setIsProfileEditOpen: (open: boolean) => void;
@@ -27,12 +27,12 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
   setIsKeywordEditOpen,
 }) => {
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
-  const userName = user?.name || '홍길동';
-  const userMajor = user?.major || '컴퓨터공학과';
-  const userStudentId = user?.id || '2021123456';
+  const userName = user?.name || '이름 없음';
+  const userMajor = user?.major || '전공 미입력';
+  const userStudentId = user?.id || '-';
 
-  const currentCredits = academicData.totalCredits.current;
-  const requiredCredits = academicData.totalCredits.required;
+  const currentCredits = academicData?.totalCredits.current ?? 0;
+  const requiredCredits = academicData?.totalCredits.required ?? 0;
 
   const flattenedSelected = Object.values(selectedKeywords || {}).flat();
 
@@ -77,7 +77,7 @@ export const MyPageSidebar: React.FC<MyPageSidebarProps> = ({
               <span className="font-medium">15학점</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">누적 이수</span>
+              <span className="text-muted-foreground">이수 학점</span>
               <span className="font-medium">
                 {currentCredits}/{requiredCredits}
               </span>

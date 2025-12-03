@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Calendar, Target, TrendingUp, ClipboardCheck, LineChart } from 'lucide-react';
+import { Calendar, Target, TrendingUp, ClipboardCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '../../types/mypage';
 import {
@@ -11,13 +11,11 @@ import {
   SemesterGpaTrend,
   EnrollmentDebugTable,
 } from './components';
-import { CourseDebugTable } from './components/CourseDebugTable'; // DEBUG: 테스트용 테이블
+import { CourseDebugTable } from './components/CourseDebugTable';
 import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
-import { mockUser, mockAcademicData, mockKeywordPrefs } from './userData';
-import { mockCoursesBySemester } from './courseData';
 import { toMainTimetable } from './courseTransforms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { getKeywords } from '../../lib/api/mypage';
+import { getKeywords, getMyTimetable } from '../../lib/api/mypage';
 import { mapKeywordsToPrefs } from './dataTransforms';
 import { useEnrollments, useRequiredCourses, useSemesterGpa } from './hooks';
 import { CreditOverviewSection } from './CreditOverviewSection';
@@ -36,12 +34,9 @@ interface MyPageProps {
   keywordPrefs?: KeywordPrefs;
 }
 
-export default function Mypage({
-  token,
-  user,
-  academicData = mockAcademicData,
-  keywordPrefs = mockKeywordPrefs,
-}: MyPageProps) {
+const emptyKeywordPrefs: KeywordPrefs = mapKeywordsToPrefs([]);
+
+export default function Mypage({ token, user, academicData, keywordPrefs }: MyPageProps) {
   const [academicDataState, setAcademicDataState] = useState<AcademicData | null>(null);
   const [keywordPrefsState, setKeywordPrefsState] = useState<KeywordPrefs | null>(null);
   const [keywordsLoading, setKeywordsLoading] = useState<boolean>(() => Boolean(token));
@@ -56,25 +51,36 @@ export default function Mypage({
     refetch: refetchRequiredCourses,
   } = useRequiredCourses(token);
 
-const {
-  semesters: semesterGpa,
-  loading: semesterGpaLoading,
-  error: semesterGpaError,
-  refetch: refetchSemesterGpa,
-} = useSemesterGpa(token);
+  const {
+    semesters: semesterGpa,
+    loading: semesterGpaLoading,
+    error: semesterGpaError,
+    refetch: refetchSemesterGpa,
+  } = useSemesterGpa(token);
 
-const {
-  enrollments,
-  loading: enrollmentsLoading,
-  error: enrollmentsError,
-  refetch: refetchEnrollments,
-} = useEnrollments(token);
-  const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_SELECTED_SEMESTER);
+  const {
+    enrollments,
+    loading: enrollmentsLoading,
+    error: enrollmentsError,
+    refetch: refetchEnrollments,
+  } = useEnrollments(token);
+
+  const [selectedSemester, setSelectedSemester] = useState(DEFAULT_SELECTED_SEMESTER);
   const [isKeywordEditOpen, setIsKeywordEditOpen] = useState(false);
   const [, setIsProfileEditOpen] = useState(false);
-  const [selectedBySemester, setSelectedBySemester] = useState<Record<string, TimetableCourseStandard[]>>(() =>
-    Object.fromEntries(Object.entries(mockCoursesBySemester).map(([sem, courses]) => [sem, [...courses]])),
-  );
+
+  const parseSemesterKey = (value: string) => {
+    const [yearStr, semStr] = value.split('-');
+    return {
+      year: Number(yearStr),
+      semester: Number(semStr),
+    };
+  };
+
+  const [selectedBySemester, setSelectedBySemester] = useState<Record<string, TimetableCourseStandard[]>>({});
+  const [timetableLoading, setTimetableLoading] = useState(false);
+  const [timetableError, setTimetableError] = useState<string | null>(null);
+  const [timetableReloadKey, setTimetableReloadKey] = useState(0);
 
   const semesterCourses = (selectedBySemester[selectedSemester] ?? []).map(toMainTimetable);
 
@@ -98,7 +104,7 @@ const {
       } catch (err) {
         if (cancelled) return;
         console.error('[mypage] failed to load keywords', err);
-        setError('키워드 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        setError('선호 키워드 정보를 불러오지 못했어요. 다시 시도해 주세요.');
       } finally {
         if (!cancelled) setKeywordsLoading(false);
       }
@@ -109,10 +115,38 @@ const {
     };
   }, [canFetch, token, reloadKey]);
 
+  const fetchTimetable = async () => {
+    if (!token) return;
+    const { year, semester } = parseSemesterKey(selectedSemester);
+    setTimetableLoading(true);
+    setTimetableError(null);
+    try {
+      const data = await getMyTimetable(token, {
+        year,
+        semester,
+        includeCompleted: false,
+      });
+      setSelectedBySemester((prev) => ({
+        ...prev,
+        [selectedSemester]: data,
+      }));
+    } catch (err) {
+      console.error('[mypage] failed to load timetable', err);
+      setTimetableError('시간표 정보를 불러오지 못했어요. 다시 시도해 주세요.');
+    } finally {
+      setTimetableLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchTimetable();
+  }, [token, selectedSemester, timetableReloadKey]);
+
   const handleRetry = () => setReloadKey((prev) => prev + 1);
 
-  const creditData = academicDataState ?? academicData;
-  const keywordData = keywordPrefsState ?? keywordPrefs;
+  const creditData = academicDataState ?? academicData ?? null;
+  const keywordData: KeywordPrefs = keywordPrefsState ?? keywordPrefs ?? emptyKeywordPrefs;
+
   const completedRequiredCount = requiredCourses.filter((course) => course.is_completed).length;
   const totalRequiredCount = requiredCourses.length;
 
@@ -202,7 +236,7 @@ const {
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2">
                 <Calendar className="h-6 w-6 text-primary" />
-                수강 데이터 (DEBUG)
+                수강 이력(DEBUG)
               </h2>
               <button
                 type="button"
@@ -234,9 +268,7 @@ const {
             ) : (
               <>
                 <EnrollmentDebugTable enrollments={enrollments} studentId={user?.id} />
-                <p className="text-xs text-muted-foreground">
-                  실제 마이페이지 UI 연동 전 데이터를 확인하기 위한 임시 표입니다.
-                </p>
+                <p className="text-xs text-muted-foreground">현재 마이페이지 UI 연동 여부를 확인하기 위한 임시 표시입니다.</p>
               </>
             )}
           </section>
@@ -269,18 +301,37 @@ const {
               </div>
             </div>
 
-            <Timetable
-              days={DAYS}
-              startHour={START_HOUR}
-              slotCount={SLOT_COUNT}
-              slotHeight={SLOT_HEIGHT}
-              courses={semesterCourses}
-            />
+            {timetableError && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-2">
+                <span>{timetableError}</span>
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => setTimetableReloadKey((prev) => prev + 1)}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
 
-            <CourseDebugTable
-              title={`DEBUG 강의 리스트 (${selectedSemester})`}
-              courses={selectedBySemester[selectedSemester] ?? []}
-            />
+            {timetableLoading ? (
+              <div className="rounded-lg border border-border p-6 animate-pulse space-y-3">
+                <div className="h-4 w-32 bg-muted rounded" />
+                <div className="h-40 bg-muted rounded" />
+              </div>
+            ) : (
+              <>
+                <Timetable
+                  days={DAYS}
+                  startHour={START_HOUR}
+                  slotCount={SLOT_COUNT}
+                  slotHeight={SLOT_HEIGHT}
+                  courses={semesterCourses}
+                />
+
+                <CourseDebugTable title={`DEBUG 강의 리스트(${selectedSemester})`} courses={selectedBySemester[selectedSemester] ?? []} />
+              </>
+            )}
           </section>
 
           <section ref={preferencesRef} id={MYPAGE_SECTION_IDS.preferences} className="space-y-4">
@@ -318,7 +369,7 @@ const {
       <Dialog open={isKeywordEditOpen} onOpenChange={setIsKeywordEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">선호 키워드 수정</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">선호 키워드 설정</DialogTitle>
           </DialogHeader>
         </DialogContent>
       </Dialog>

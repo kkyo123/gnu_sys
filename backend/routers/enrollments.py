@@ -42,6 +42,10 @@ class EnrollmentPublic(EnrollmentBase):
     id: str
     student_id: str
     course_name: Optional[str] = None
+    professor: Optional[str] = None
+    timeslot: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     category: Optional[str] = None
     category_label: Optional[str] = None
     category_original: Optional[str] = None
@@ -79,6 +83,10 @@ def _to_public(doc: dict) -> EnrollmentPublic:
         grade_point=doc.get("grade_point"),
         credits=doc.get("credits"),
         course_name=doc.get("course_name"),
+        professor=doc.get("professor"),
+        timeslot=doc.get("timeslot"),
+        start_time=doc.get("start_time"),
+        end_time=doc.get("end_time"),
         category=doc.get("category"),
         category_label=doc.get("category_label"),
         category_original=doc.get("category_original"),
@@ -98,13 +106,25 @@ def _to_public(doc: dict) -> EnrollmentPublic:
 async def _ensure_course_info(doc: dict, db):
     # course_name, category 보정
     course = None
-    if (not doc.get("course_name") or not doc.get("category")) and doc.get("course_code"):
+    needs_course_lookup = any(
+        not doc.get(field)
+        for field in ("course_name", "category", "professor", "timeslot", "start_time", "end_time")
+    )
+    if needs_course_lookup and doc.get("course_code"):
         course = await db.courses.find_one({"course_code": doc["course_code"]})
         if course:
             if not doc.get("course_name"):
                 doc["course_name"] = course.get("course_name")
             if not doc.get("category"):
                 doc["category"] = course.get("category")
+            if not doc.get("professor"):
+                doc["professor"] = course.get("professor")
+            if not doc.get("timeslot"):
+                doc["timeslot"] = course.get("timeslot") or course.get("time")
+            if not doc.get("start_time"):
+                doc["start_time"] = course.get("start_time")
+            if not doc.get("end_time"):
+                doc["end_time"] = course.get("end_time")
 
     # 카테고리 매핑
     raw_category = doc.get("category_original") or doc.get("category")
@@ -180,6 +200,10 @@ async def create_enrollment(
     doc["student_id"] = user["student_id"]
     doc["credits"] = credits
     doc["course_name"] = raw_course_name
+    doc["professor"] = course.get("professor")
+    doc["timeslot"] = course.get("timeslot") or course.get("time")
+    doc["start_time"] = course.get("start_time")
+    doc["end_time"] = course.get("end_time")
 
     course_category = course.get("category")
     if course_category:

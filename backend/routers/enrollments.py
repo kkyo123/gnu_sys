@@ -1,4 +1,4 @@
-#수강/성적 관리
+# 수강/성적 관리
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional, Literal, List
@@ -15,14 +15,16 @@ EnrollmentStatus = Literal["PLANNED", "IN_PROGRESS", "COMPLETED"]
 CATEGORY_LABEL_MAP = {key: label for key, label in SUMMARY_BUCKETS}
 
 
+# ----- 모델 정의 -----
+
 class EnrollmentBase(BaseModel):
     course_code: str
     year: int
-    semester: int            # 1 or 2
+    semester: int # 1 or 2
     status: EnrollmentStatus = "IN_PROGRESS"
     grade: Optional[str] = None
     grade_point: Optional[float] = None
-    credits: Optional[int] = None  # 안 주면 course에서 가져옴
+    credits: Optional[int] = None
 
 
 class EnrollmentCreate(EnrollmentBase):
@@ -46,19 +48,22 @@ class EnrollmentPublic(EnrollmentBase):
     created_at: str
     updated_at: str
 
+
+# ----- 내부 유틸 -----
+
 def _normalize_status(raw: Optional[str]) -> EnrollmentStatus:
     if raw == "ENROLLED":
-        return "IN_PROGRESS"   # 기존 seed 데이터 보정
+        return "IN_PROGRESS"
     if raw in ("PLANNED", "IN_PROGRESS", "COMPLETED"):
         return raw
-    return "IN_PROGRESS"       # 기본값
+    return "IN_PROGRESS"
 
 
 def _to_public(doc: dict) -> EnrollmentPublic:
     return EnrollmentPublic(
         id=str(doc.get("_id", "")),
         student_id=str(doc.get("student_id", "")),
-        course_code=str(doc.get("course_code", "")),  # int → str 변환
+        course_code=str(doc.get("course_code", "")),
         year=int(doc.get("year", 0)),
         semester=int(doc.get("semester", 1)),
         status=_normalize_status(doc.get("status")),
@@ -75,15 +80,17 @@ def _to_public(doc: dict) -> EnrollmentPublic:
 
 
 async def _ensure_course_info(doc: dict, db):
+    # course_name, category 보정
     course = None
     if (not doc.get("course_name") or not doc.get("category")) and doc.get("course_code"):
         course = await db.courses.find_one({"course_code": doc["course_code"]})
         if course:
             if not doc.get("course_name"):
-                doc["course_name"] = course.get("name")
+                doc["course_name"] = course.get("course_name")
             if not doc.get("category"):
                 doc["category"] = course.get("category")
 
+    # 카테고리 매핑
     raw_category = doc.get("category_original") or doc.get("category")
     if raw_category:
         doc["category_original"] = raw_category
@@ -99,6 +106,8 @@ async def _ensure_course_info(doc: dict, db):
 
     return doc
 
+
+# ----- 내 수강/성적 목록 조회 -----
 
 @router.get(
     "/me/enrollments",
@@ -132,6 +141,8 @@ async def list_my_enrollments(
     return enriched
 
 
+# ----- 새 수강/성적 기록 추가 -----
+
 @router.post(
     "/me/enrollments",
     response_model=EnrollmentPublic,
@@ -142,17 +153,18 @@ async def create_enrollment(
     user=Depends(get_current_user),
 ):
     db = get_db()
-    # 과목 존재 여부 확인
     course = await db.courses.find_one({"course_code": payload.course_code})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
     credits = payload.credits if payload.credits is not None else course.get("credits", 0)
+    raw_course_name = course.get("course_name")
 
     doc = payload.model_dump(exclude_unset=True)
     doc["student_id"] = user["student_id"]
     doc["credits"] = credits
-    doc["course_name"] = course.get("name")
+    doc["course_name"] = raw_course_name
+
     course_category = course.get("category")
     if course_category:
         doc["category_original"] = course_category
@@ -160,6 +172,7 @@ async def create_enrollment(
         doc["category"] = bucket or course_category
         if bucket:
             doc["category_label"] = CATEGORY_LABEL_MAP.get(bucket, bucket)
+
     now = now_iso()
     doc["created_at"] = now
     doc["updated_at"] = now
@@ -168,6 +181,8 @@ async def create_enrollment(
     inserted = await db.enrollments.find_one({"_id": res.inserted_id})
     return _to_public(await _ensure_course_info(inserted, db))
 
+
+# ----- 수강/성적 기록 수정 -----
 
 @router.patch(
     "/me/enrollments/{enrollment_id}",
@@ -201,6 +216,8 @@ async def update_enrollment(
     doc = await db.enrollments.find_one({"_id": oid})
     return _to_public(await _ensure_course_info(doc, db))
 
+
+# ----- 수강/성적 기록 삭제 -----
 
 @router.delete(
     "/me/enrollments/{enrollment_id}",

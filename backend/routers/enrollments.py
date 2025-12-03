@@ -6,10 +6,13 @@ from bson import ObjectId
 
 from database.connection import get_db, now_iso
 from routers.auth import get_current_user
+from routers.mypage import SUMMARY_BUCKETS, bucket_category
 
 router = APIRouter(tags=["Enrollments"])
 
 EnrollmentStatus = Literal["PLANNED", "IN_PROGRESS", "COMPLETED"]
+
+CATEGORY_LABEL_MAP = {key: label for key, label in SUMMARY_BUCKETS}
 
 
 class EnrollmentBase(BaseModel):
@@ -37,6 +40,8 @@ class EnrollmentPublic(EnrollmentBase):
     id: str
     student_id: str
     category: Optional[str] = None
+    course_name: Optional[str] = None
+    category_label: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -60,10 +65,30 @@ def _to_public(doc: dict) -> EnrollmentPublic:
         grade_point=doc.get("grade_point"),
         credits=doc.get("credits"),
         category=doc.get("category"),
+        course_name=doc.get("course_name"),
+        category_label=doc.get("category_label"),
         created_at=doc.get("created_at") or now_iso(),
         updated_at=doc.get("updated_at") or now_iso(),
     )
 
+
+async def _ensure_course_info(doc: dict, db):
+    course = None
+    if (not doc.get("course_name") or not doc.get("category")) and doc.get("course_code"):
+        course = await db.courses.find_one({"course_code": doc["course_code"]})
+        if course:
+            if not doc.get("course_name"):
+                doc["course_name"] = course.get("name")
+            if not doc.get("category"):
+                doc["category"] = course.get("category")
+
+    bucket = bucket_category(doc.get("category"))
+    if bucket:
+        doc["category"] = bucket
+        doc["category_label"] = CATEGORY_LABEL_MAP.get(bucket, bucket)
+    elif doc.get("category"):
+        doc["category_label"] = doc["category"]
+    return doc
 
 
 @router.get(
@@ -92,7 +117,10 @@ async def list_my_enrollments(
         .sort([("year", 1), ("semester", 1), ("course_code", 1)])
     )
     docs = await cursor.to_list(length=None)
-    return [_to_public(d) for d in docs]
+    enriched = []
+    for doc in docs:
+        enriched.append(_to_public(await _ensure_course_info(doc, db)))
+    return enriched
 
 
 @router.post(
@@ -115,15 +143,20 @@ async def create_enrollment(
     doc = payload.model_dump(exclude_unset=True)
     doc["student_id"] = user["student_id"]
     doc["credits"] = credits
-    if course.get("category"):
-        doc["category"] = course["category"]
+    doc["course_name"] = course.get("name")
+    course_category = course.get("category")
+    if course_category:
+        bucket = bucket_category(course_category)
+        doc["category"] = bucket or course_category
+        if bucket:
+            doc["category_label"] = CATEGORY_LABEL_MAP.get(bucket, bucket)
     now = now_iso()
     doc["created_at"] = now
     doc["updated_at"] = now
 
     res = await db.enrollments.insert_one(doc)
     inserted = await db.enrollments.find_one({"_id": res.inserted_id})
-    return _to_public(inserted)
+    return _to_public(await _ensure_course_info(inserted, db))
 
 
 @router.patch(
@@ -156,7 +189,7 @@ async def update_enrollment(
         raise HTTPException(status_code=404, detail="Enrollment not found")
 
     doc = await db.enrollments.find_one({"_id": oid})
-    return _to_public(doc)
+    return _to_public(await _ensure_course_info(doc, db))
 
 
 @router.delete(

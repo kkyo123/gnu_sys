@@ -35,28 +35,28 @@ export const EnrollmentDebugTable: React.FC<EnrollmentDebugTableProps> = ({ enro
             <thead>
               <tr className="text-muted-foreground text-xs uppercase">
                 <th className="py-2 text-left">코드</th>
+                <th className="py-2 text-left">강의명</th>
+                <th className="py-2 text-left">분류</th>
                 <th className="py-2 text-left">년도/학기</th>
                 <th className="py-2 text-left">상태</th>
                 <th className="py-2 text-left">학점</th>
-                <th className="py-2 text-left">구분</th>
                 <th className="py-2 text-left">평점</th>
-                <th className="py-2 text-left">ID</th>
               </tr>
             </thead>
             <tbody>
               {enrollments.map((enrollment) => (
                 <tr key={enrollment.id} className="border-b last:border-0">
                   <td className="py-2 pr-3 font-mono text-xs">{enrollment.course_code}</td>
+                  <td className="py-2 pr-3">{enrollment.course_name ?? '-'}</td>
+                  <td className="py-2 pr-3">{enrollment.category_label ?? enrollment.category ?? '-'}</td>
                   <td className="py-2 pr-3">
                     {enrollment.year}-{enrollment.semester}
                   </td>
                   <td className="py-2 pr-3">{enrollment.status}</td>
                   <td className="py-2 pr-3">{enrollment.credits ?? '-'}</td>
-                  <td className="py-2 pr-3">{enrollment.category ?? '-'}</td>
                   <td className="py-2 pr-3">
                     {enrollment.status === 'COMPLETED' ? enrollment.grade_point ?? '-' : '-'}
                   </td>
-                  <td className="py-2 pr-3 font-mono text-[10px] text-muted-foreground">{enrollment.id}</td>
                 </tr>
               ))}
             </tbody>

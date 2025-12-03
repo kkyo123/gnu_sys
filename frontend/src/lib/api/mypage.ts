@@ -52,10 +52,12 @@ export interface EnrollmentItem {
   id: string;
   student_id: string;
   course_code: string;
+  course_name?: string | null;
   year: number;
   semester: number;
   status: string;
   category?: string | null;
+  category_label?: string | null;
   grade?: string | null;
   grade_point?: number | null;
   credits?: number | null;

@@ -10,7 +10,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Search from './pages/Search/Search';
 import Recommend from './pages/Search/Recommend';
 import Graduation from './pages/Search/Graduation';
-import Mypage from './pages/Mypage/Mypage';
+import Mypage from './pages/mypage/Mypage';
 
 type User = any;
 
@@ -115,7 +115,7 @@ function AppInner({
         <Route path="/dashboard" element={isLoggedIn ? <Dashboard userData={user} /> : <Navigate to="/login" replace />} />
         <Route path="/search" element={isLoggedIn ? <Search /> : <Navigate to="/login" replace />} />
         <Route path="/recommendation" element={isLoggedIn ? <Recommend /> : <Navigate to="/login" replace />} />
-        <Route path="/graduation" element={isLoggedIn ? <Graduation /> : <Navigate to="/login" replace />} />
+        <Route path="/graduation" element={isLoggedIn ? <Graduation token={token} user={user} /> : <Navigate to="/login" replace />} />
         <Route
           path="/mypage"
           element={isLoggedIn ? <Mypage token={token} user={user} /> : <Navigate to="/login" replace />}

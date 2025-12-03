@@ -20,10 +20,20 @@ const difficultyCopy: Record<CourseDifficulty, string> = {
 interface RecommendedCoursesProps {
   courses: CourseRecommendation[];
   visibleCount?: number;
+  /** 과목 상세 모달 열기 */
+  onCourseDetail?: (course: CourseRecommendation) => void;
+  /** 카드에서 바로 관심과목 등록 */
+  onAddInterest?: (course: CourseRecommendation) => void;
 }
 
-export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({ courses, visibleCount }) => {
+export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({
+  courses,
+  visibleCount,
+  onCourseDetail,
+  onAddInterest,
+}) => {
   const list = visibleCount ? courses.slice(0, visibleCount) : courses;
+
   return (
     <Card>
       <CardHeader>
@@ -38,6 +48,7 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({ courses,
           <Card key={course.id} className="border">
             <CardContent className="pt-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                {/* 왼쪽: 텍스트 정보 */}
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <h3 className="text-lg font-semibold">{course.title}</h3>
@@ -56,20 +67,33 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({ courses,
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 lg:flex-col lg:items-end">
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      <span>{difficultyCopy[course.difficulty]}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <GraduationCap className="h-4 w-4" />
-                      <span>{course.credits}학점</span>
-                    </div>
+                {/* 오른쪽: 정보 + 버튼들 */}
+                <div className="flex items-center gap-3 lg:flex-col lg:items-end">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>{course.credits}학점</span>
                   </div>
-                  <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90">
-                    과목 상세
-                  </Button>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <BookOpen className="h-4 w-4" />
+                    <span>난이도: {difficultyCopy[course.difficulty]}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onAddInterest?.(course)}
+                    >
+                      관심과목
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-foreground text-background hover:bg-foreground/90"
+                      onClick={() => onCourseDetail?.(course)}
+                    >
+                      과목 상세
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>

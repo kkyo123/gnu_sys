@@ -228,7 +228,7 @@ export default function Search() {
         <h1>강의 검색</h1>
         <p className="text-muted-foreground mt-2">키워드로 원하는 강의를 찾아보세요</p>
       </div>
-      {/* --- BEGIN: First Course Quick View (temporary) --- */}
+      {/* --- BEGIN: First Course Quick View (temporary)}
       {firstCourse && (
         <Card className="mb-6">
           <CardHeader>
@@ -351,20 +351,6 @@ export default function Search() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground">총 {filteredCourses.length}개의 강의를 찾았습니다</p>
-            <Select defaultValue="rating">
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rating">평점순</SelectItem>
-                <SelectItem value="name">이름순</SelectItem>
-                <SelectItem value="professor">교수명순</SelectItem>
-                <SelectItem value="capacity">수용인원순</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
         <div className="grid gap-4">
           {loading && (
@@ -406,7 +392,6 @@ export default function Search() {
                   <div className="flex flex-col items-end space-y-2">
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm" onClick={() => handleCourseDetail(course)}>상세보기</Button>
-                      <Button size="sm">찜하기</Button>
                     </div>
                   </div>
                 </div>

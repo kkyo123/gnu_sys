@@ -3,7 +3,6 @@ import { Calendar, Target, TrendingUp, ClipboardCheck, LineChart } from 'lucide-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '../../types/mypage';
 import {
-  CreditOverview,
   KeywordPreferences,
   MyPageSidebar,
   Timetable,
@@ -18,9 +17,10 @@ import { mockUser, mockAcademicData, mockKeywordPrefs } from './userData';
 import { mockCoursesBySemester } from './courseData';
 import { toMainTimetable } from './courseTransforms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { getCreditSummary, getKeywords } from '../../lib/api/mypage';
-import { mapCreditSummaryToAcademicData, mapKeywordsToPrefs } from './dataTransforms';
+import { getKeywords } from '../../lib/api/mypage';
+import { mapKeywordsToPrefs } from './dataTransforms';
 import { useEnrollments, useRequiredCourses, useSemesterGpa } from './hooks';
+import { CreditOverviewSection } from './CreditOverviewSection';
 import {
   DEFAULT_SELECTED_SEMESTER,
   MYPAGE_SECTION_IDS,
@@ -44,7 +44,7 @@ export default function Mypage({
 }: MyPageProps) {
   const [academicDataState, setAcademicDataState] = useState<AcademicData | null>(null);
   const [keywordPrefsState, setKeywordPrefsState] = useState<KeywordPrefs | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(token));
+  const [keywordsLoading, setKeywordsLoading] = useState<boolean>(() => Boolean(token));
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const canFetch = Boolean(token);
@@ -84,31 +84,26 @@ const {
 
   useEffect(() => {
     if (!canFetch || !token) {
-      setIsLoading(false);
+      setKeywordsLoading(false);
       return;
     }
     let cancelled = false;
-    const fetchData = async () => {
-      setIsLoading(true);
+    const fetchKeywords = async () => {
+      setKeywordsLoading(true);
       setError(null);
       try {
-        const [creditSummary, keywords] = await Promise.all([
-          getCreditSummary(token),
-          getKeywords(token),
-        ]);
+        const keywords = await getKeywords(token);
         if (cancelled) return;
-        setAcademicDataState(mapCreditSummaryToAcademicData(creditSummary));
         setKeywordPrefsState(mapKeywordsToPrefs(keywords));
       } catch (err) {
         if (cancelled) return;
-        // eslint-disable-next-line no-console
-        console.error('[mypage] failed to load data', err);
-        setError('마이페이지 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        console.error('[mypage] failed to load keywords', err);
+        setError('키워드 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setKeywordsLoading(false);
       }
     };
-    void fetchData();
+    void fetchKeywords();
     return () => {
       cancelled = true;
     };
@@ -167,19 +162,7 @@ const {
               <TrendingUp className="w-6 h-6 text-primary" />
               학점 이수 현황
             </h2>
-            {isLoading ? (
-              <div className="space-y-4 rounded-lg border border-border p-6 animate-pulse">
-                <div className="h-8 w-1/3 bg-muted rounded" />
-                <div className="h-48 bg-muted rounded" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Array.from({ length: 2 }).map((_, idx) => (
-                    <div key={idx} className="h-20 bg-muted rounded" />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <CreditOverview academicData={creditData} />
-            )}
+            <CreditOverviewSection token={token} onDataLoaded={(data) => setAcademicDataState(data)} />
           </section>
 
           <section className="space-y-3">
@@ -313,7 +296,7 @@ const {
                 </button>
               </div>
             )}
-            {!error && isLoading ? (
+            {!error && keywordsLoading ? (
               <div className="rounded-lg border border-border p-6 animate-pulse space-y-4">
                 {Array.from({ length: 3 }).map((_, idx) => (
                   <div key={idx}>

@@ -1,0 +1,1 @@
+export { mapCreditSummaryToAcademicData } from '../dataTransforms';

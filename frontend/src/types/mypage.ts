@@ -21,6 +21,8 @@ export interface CreditCategory {
   required: number;
 }
 
+
+
 export interface AcademicData {
   totalCredits: { current: number; required: number };
   categories: CreditCategory[];

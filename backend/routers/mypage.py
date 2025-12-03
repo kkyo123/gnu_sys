@@ -190,7 +190,7 @@ async def get_required_courses(user=Depends(get_current_user)):
     items = [
         RequiredCourseItem(
             course_code=course["course_code"],
-            name=course["name"],
+            name=course.get("name") or course.get("course_name", ""),
             is_completed=course["course_code"] in completed_codes,
         )
         for course in required_courses

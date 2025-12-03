@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search as SearchIcon, Filter, Clock, User, Star, BookOpen, Users, FileText, Award } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -76,6 +76,56 @@ export default function Search() {
       raw: c,
     }));
   }, [apiCourses]);
+
+  const firstCourse = useMemo(() => apiCourses[0] ?? null, [apiCourses]);
+
+  const firstCourseKeywordRows = useMemo(() => {
+    if (!firstCourse) return [];
+    const raw: any = firstCourse;
+    const formatValue = (value?: string[] | string) => {
+      if (!value) return undefined;
+      if (Array.isArray(value)) return value.join(', ');
+      if (typeof value === 'string') {
+        return value
+          .split(',')
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      return undefined;
+    };
+    return [
+      { label: 'plan', value: formatValue(raw?.plan_keywords) },
+      { label: 'test', value: formatValue(raw?.test_keywords) },
+      { label: 'assignment', value: formatValue(raw?.assignment_keywords) },
+      { label: 'method', value: formatValue(raw?.method_keywords) },
+      { label: 'etc', value: formatValue(raw?.etc_keywords) },
+    ];
+  }, [firstCourse]);
+
+  const firstCourseRows = useMemo(() => {
+    if (!firstCourse) return [];
+    const raw: any = firstCourse;
+    return [
+      { label: 'requirement_id', value: firstCourse.requirement_id },
+      { label: 'category', value: firstCourse.category },
+      { label: 'course_name', value: firstCourse.course_name },
+      { label: 'course_code', value: firstCourse.course_code },
+      { label: 'professor', value: firstCourse.professor },
+      { label: 'timeslot', value: raw?.timeslot ?? raw?.time },
+      { label: 'credits', value: firstCourse.credits },
+      { label: 'class', value: raw?.class ?? raw?.cls },
+      { label: 'group', value: raw?.group },
+      { label: 'year', value: firstCourse.year },
+      { label: 'major_track', value: firstCourse.major_track },
+      { label: 'general_type', value: firstCourse.general_type },
+      { label: 'source_collection', value: firstCourse.source_collection },
+      { label: 'source_sheet', value: firstCourse.source_sheet },
+      { label: '비고', value: raw?.비고 },
+      { label: '설명', value: raw?.설명 ?? raw?.description },
+      
+    ];
+  }, [firstCourse]);
 
   // 체크박스 필터 키와 실제 데이터상의 유형 문자열 매핑
   // 1) 키를 표준 태그로 매핑 (프런트 고정 키 → 표준 태그)
@@ -178,6 +228,30 @@ export default function Search() {
         <h1>강의 검색</h1>
         <p className="text-muted-foreground mt-2">키워드로 원하는 강의를 찾아보세요</p>
       </div>
+      {/* --- BEGIN: First Course Quick View (temporary) --- */}
+      {firstCourse && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>강의 검색 첫 번째 결과 상세</CardTitle>
+            <CardDescription>현재 검색 조건으로 반환된 첫 번째 강의 정보를 확인하세요.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {[...firstCourseRows, ...firstCourseKeywordRows].map((row) => (
+                    <tr key={row.label} className="border-b last:border-0">
+                      <td className="py-2 pr-3 font-semibold text-muted-foreground text-xs uppercase">{row.label}</td>
+                      <td className="py-2">{row.value ?? '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {/* --- END: First Course Quick View (temporary) --- */}
       <div className="space-y-4 mb-6">
         <div className="flex gap-4">
           <div className="flex-1 relative">
@@ -307,8 +381,8 @@ export default function Search() {
                     <div className="flex items-center space-x-2 mb-2">
                       <h3>{course.name}</h3>
                       {course.type && <Badge variant="secondary">{course.type}</Badge>}
-                      {course.raw?.course_code && (
-                        <span className="text-xs text-muted-foreground">· {course.raw.course_code}</span>
+                      {course.raw?.course_code && course.raw?.class && (
+                        <span className="text-xs text-muted-foreground">· {course.raw.course_code} - {course.raw.class} </span>
                       )}
                     </div>
                     <p className="text-muted-foreground text-sm mb-3">강의설명</p>
@@ -353,33 +427,24 @@ export default function Search() {
                       <DialogDescription className="flex items-center space-x-2">
                         <Badge variant="secondary">{selectedCourse.type}</Badge>
                         <span>·</span>
-                        <span>{selectedCourse.department}</span>
+                        {selectedCourse.raw?.course_code && selectedCourse.raw?.class &&(
+                          <>
+                            <span>{selectedCourse.raw.course_code} - {selectedCourse.raw.class}</span>
+                            </>
+                          )}
+                        
                       </DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
-                <div className="space-y-6 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-6 mt-4 ml-2 mr-2">
+                  <div className="flex items-center justify-between">
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <User className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground">교수명</p>
                           <p>{selectedCourse.professor}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <BookOpen className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">학점</p>
-                          <p>{selectedCourse.credits}학점</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">평점</p>
-                          <p>{selectedCourse.rating} ({details.reviews}건 리뷰)</p>
                         </div>
                       </div>
                     </div>
@@ -391,11 +456,13 @@ export default function Search() {
                           <p>{selectedCourse.timeslot}</p>
                         </div>
                       </div>
+                    </div>
+                    <div className="space-y-3">
                       <div className="flex items-center space-x-2">
-                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <BookOpen className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm text-muted-foreground">수강 인원</p>
-                          <p>{selectedCourse.enrolled}/{selectedCourse.capacity}명</p>
+                          <p className="text-sm text-muted-foreground">학점</p>
+                          <p>{selectedCourse.credits}학점</p>
                         </div>
                       </div>
                     </div>
@@ -423,57 +490,6 @@ export default function Search() {
                   </div>
 
                   <Separator />
-
-                  {details.prerequisites.length > 0 && (
-                    <div>
-                      <h4 className="mb-2">선수과목</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {details.prerequisites.map((prereq: string) => (
-                          <Badge key={prereq} variant="outline">{prereq}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <h4 className="flex items-center space-x-2 mb-3">
-                      <Award className="h-4 w-4" />
-                      <span>평가 비율</span>
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm">중간고사</span>
-                        <span>{details.assessmentMethod.midterm}%</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm">기말고사</span>
-                        <span>{details.assessmentMethod.final}%</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm">과제</span>
-                        <span>{details.assessmentMethod.assignment}%</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm">출석</span>
-                        <span>{details.assessmentMethod.attendance}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">난이도</p>
-                      <Badge variant={details.difficulty === '어려움' ? 'secondary' : details.difficulty === '보통' ? 'outline' : 'destructive'}>
-                        {details.difficulty}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">수강 가능 여부</p>
-                      <Badge variant={selectedCourse.enrolled < selectedCourse.capacity ? 'default' : 'destructive'}>
-                        {selectedCourse.enrolled < selectedCourse.capacity ? '수강 가능' : '마감'}
-                      </Badge>
-                    </div>
-                  </div>
 
                   <div className="flex space-x-2 pt-4">
                     <Button className="flex-1" disabled={selectedCourse.enrolled >= selectedCourse.capacity}>수강신청</Button>

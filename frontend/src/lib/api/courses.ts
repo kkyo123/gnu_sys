@@ -10,6 +10,12 @@ export type CourseOut = {
   credits?: number;
   timeslot?: string;
   class?: string;
+  plan_keywords?: string[] | string;
+  test_keywords?: string[] | string;
+  assignment_keywords?: string[] | string;
+  method_keywords?: string[] | string;
+  etc_keywords?: string[] | string;
+  note?: string;
   group?: string;
   year?: number;
   major_track?: string;

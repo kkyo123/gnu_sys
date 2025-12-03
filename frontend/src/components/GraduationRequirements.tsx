@@ -11,27 +11,14 @@ interface GraduationRequirementsProps {
 }
 
 export function GraduationRequirements({ user }: GraduationRequirementsProps) {
-  const graduationData = {
-    totalRequired: 130,
-    completed: 107,
-    remaining: 23,
-    requirements: {
-      major: { required: 60, completed: 48, remaining: 12 },
-      general: { required: 30, completed: 30, remaining: 0 },
-      elective: { required: 40, completed: 29, remaining: 11 }
-    },
-    gpa: 3.8,
-    minGpa: 2.0
-  };
-
+  
   const recommendedCourses = [
     {
       id: 1,
       name: '소프트웨어공학',
       credits: 3,
       category: '전공필수',
-      difficulty: '중급',
-      prerequisite: '자료구조',
+      timeslot: '금 1,2,3',
       semester: '2024-2',
       professor: '김교수',
       rating: 4.2,
@@ -64,32 +51,6 @@ export function GraduationRequirements({ user }: GraduationRequirementsProps) {
       description: '최신 기술 트렌드에 맞는 추천 과목',
       priority: 'medium'
     },
-    {
-      id: 4,
-      name: '창의적사고',
-      credits: 2,
-      category: '교양선택',
-      difficulty: '초급',
-      prerequisite: '없음',
-      semester: '2024-2',
-      professor: '정교수',
-      rating: 4.3,
-      description: '남은 교양학점을 채우기 위한 과목',
-      priority: 'medium'
-    },
-    {
-      id: 5,
-      name: '캡스톤디자인',
-      credits: 3,
-      category: '전공필수',
-      difficulty: '고급',
-      prerequisite: '소프트웨어공학',
-      semester: '2025-1',
-      professor: '최교수',
-      rating: 4.1,
-      description: '졸업작품을 위한 필수과목',
-      priority: 'high'
-    }
   ];
 
   const semesterPlan = {
@@ -138,57 +99,7 @@ export function GraduationRequirements({ user }: GraduationRequirementsProps) {
         <h1>졸업 요건</h1>
         <p className="text-muted-foreground mt-2">졸업을 위한 남은 학점을 확인하세요</p>
       </div>
-        {/* Overview */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              <span>졸업 요건 현황</span>
-            </CardTitle>
-            <CardDescription>
-              {user?.name || '학생'}님의 졸업까지 남은 학점과 요건을 확인하세요
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Overall Progress */}
-              <div className="space-y-4">
-                <h3>전체 이수 현황</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>총 이수학점</span>
-                    <span>{graduationData.completed}/{graduationData.totalRequired}학점</span>
-                  </div>
-                  <Progress 
-                    value={(graduationData.completed / graduationData.totalRequired) * 100} 
-                    className="h-3"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    졸업까지 <span className="text-primary">{graduationData.remaining}학점</span> 남았습니다
-                  </p>
-                </div>
-              </div>
-
-              {/* GPA */}
-              <div className="space-y-4">
-                <h3>학점 현황</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>현재 평점</span>
-                    <span className="text-2xl">{graduationData.gpa}/4.5</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-600">
-                      졸업 요구 평점 {graduationData.minGpa} 이상 충족
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+        
         {/* Requirements Breakdown */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {Object.entries(graduationData.requirements).map(([key, req]) => (
@@ -197,7 +108,7 @@ export function GraduationRequirements({ user }: GraduationRequirementsProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3>
-                      {key === 'major' && '전공'}
+                      {key === 'major' && '필수'}
                       {key === 'general' && '교양'}
                       {key === 'elective' && '선택'}
                     </h3>
@@ -267,20 +178,7 @@ export function GraduationRequirements({ user }: GraduationRequirementsProps) {
                               {course.description}
                             </p>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">분류: </span>
-                                <span>{course.category}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">난이도: </span>
-                                <span>{course.difficulty}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">선수과목: </span>
-                                <span>{course.prerequisite}</span>
-                              </div>
-                            </div>
+                           
                           </div>
                           
                           <div className="flex flex-col items-end space-y-2">

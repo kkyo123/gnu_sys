@@ -1,21 +1,16 @@
 import React from 'react';
-import { BookOpen, GraduationCap, Target } from 'lucide-react';
+import { BookOpen, GraduationCap, Target, User } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import type { CourseDifficulty, CoursePriority, CourseRecommendation } from '../../../types/graduation';
 
 const priorityCopy: Record<CoursePriority, { label: string; className: string }> = {
-  high: { label: '필수', className: 'bg-red-100 text-red-700 hover:bg-red-100' },
-  medium: { label: '추천', className: 'bg-amber-100 text-amber-700 hover:bg-amber-100' },
-  low: { label: '선택', className: 'bg-slate-100 text-slate-700 hover:bg-slate-100' },
+  high: { label: '전공필수', className: 'bg-red-100 text-red-700 hover:bg-red-100' },
+  medium: { label: '전공선택', className: 'bg-amber-100 text-amber-700 hover:bg-amber-100' },
+  low: { label: '교양', className: 'bg-slate-100 text-slate-700 hover:bg-slate-100' },
 };
 
-const difficultyCopy: Record<CourseDifficulty, string> = {
-  beginner: '초급',
-  intermediate: '중급',
-  advanced: '심화',
-};
 
 interface RecommendedCoursesProps {
   courses: CourseRecommendation[];
@@ -59,12 +54,19 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({
                       {course.category} · {course.semester}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{course.description}</p>
-                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    <span>교수: {course.professor}</span>
-                    <span>선수: {course.prerequisite ?? '없음'}</span>
-                    {course.rating && <span>평점: {course.rating.toFixed(1)}</span>}
+                  
+                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>{course.professor}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <BookOpen className="h-4 w-4" />
+                      <span>{course.id}</span>
+                    </div>
                   </div>
+                  <p className="text-sm text-muted-foreground">{course.description}</p>
+                  
                 </div>
 
                 {/* 오른쪽: 정보 + 버튼들 */}
@@ -73,21 +75,12 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({
                     <GraduationCap className="h-4 w-4" />
                     <span>{course.credits}학점</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    <span>난이도: {difficultyCopy[course.difficulty]}</span>
-                  </div>
+                  
 
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onAddInterest?.(course)}
-                    >
-                      관심과목
-                    </Button>
-                    <Button
-                      size="sm"
                       className="bg-foreground text-background hover:bg-foreground/90"
                       onClick={() => onCourseDetail?.(course)}
                     >

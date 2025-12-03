@@ -84,7 +84,7 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({
                       className="bg-foreground text-background hover:bg-foreground/90"
                       onClick={() => onCourseDetail?.(course)}
                     >
-                      과목 상세
+                      상세보기
                     </Button>
                   </div>
                 </div>

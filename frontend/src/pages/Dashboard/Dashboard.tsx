@@ -13,7 +13,7 @@ const Link = ({
   className?: string;
   children: React.ReactNode;
 }) => (
-  <a href={to} className={className} onClick={(e) => e.preventDefault()}>
+  <a href={to} className={className}>
     {children}
   </a>
 );
@@ -304,7 +304,7 @@ export default function Dashboard({
               </div>
 
               <Link
-                to="/requirements"
+                to="/graduation"
                 className="mt-auto flex h-[40px] w-full items-center justify-center rounded-[20px] border border-[#D4D4D4] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 이수학점 자세히 보기

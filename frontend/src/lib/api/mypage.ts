@@ -20,9 +20,10 @@ export interface RadarItem {
 
 export interface CreditSummaryResponse {
   total: CreditSummaryItem;
-  major: CreditSummaryItem;
-  general: CreditSummaryItem;
-  elective: CreditSummaryItem;
+  major_required: CreditSummaryItem;
+  major_elective: CreditSummaryItem;
+  core_general: CreditSummaryItem;
+  balance_general: CreditSummaryItem;
   radar: RadarItem[];
 }
 

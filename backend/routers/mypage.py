@@ -1,14 +1,68 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Optional
+
 from database.connection import get_db
 from routers.auth import get_current_user
 
 router = APIRouter(tags=["MyPage"])
 
+SUMMARY_BUCKETS = [
+    ("MAJOR_REQUIRED", "전공필수"),
+    ("MAJOR_ELECTIVE", "전공선택"),
+    ("CORE_GENERAL", "핵심교양"),
+    ("BALANCE_GENERAL", "균형교양"),
+]
+SUMMARY_KEYS = [key for key, _ in SUMMARY_BUCKETS]
+SUMMARY_KEY_SET = set(SUMMARY_KEYS)
+
+CATEGORY_BUCKETS = {
+    "MAJOR": "MAJOR_REQUIRED",
+    "MAJOR_REQUIRED": "MAJOR_REQUIRED",
+    "MAJOR MANDATORY": "MAJOR_REQUIRED",
+    "전공필수": "MAJOR_REQUIRED",
+    "전공-필수": "MAJOR_REQUIRED",
+    "MAJOR_ELECTIVE": "MAJOR_ELECTIVE",
+    "MAJOR ELECTIVE": "MAJOR_ELECTIVE",
+    "전공선택": "MAJOR_ELECTIVE",
+    "전공": "MAJOR_ELECTIVE",
+    "GENERAL": "CORE_GENERAL",
+    "CORE_GENERAL": "CORE_GENERAL",
+    "LIBERAL": "CORE_GENERAL",
+    "기초교양": "CORE_GENERAL",
+    "핵심교양": "CORE_GENERAL",
+    "글쓰기": "CORE_GENERAL",
+    "영어": "CORE_GENERAL",
+    "디지털리터러시": "CORE_GENERAL",
+    "BALANCE_GENERAL": "BALANCE_GENERAL",
+    "균형교양": "BALANCE_GENERAL",
+    "문학과문화": "BALANCE_GENERAL",
+    "역사와철학": "BALANCE_GENERAL",
+    "인간과사회": "BALANCE_GENERAL",
+    "생명과환경": "BALANCE_GENERAL",
+    "과학과기술": "BALANCE_GENERAL",
+    "예술과체육": "BALANCE_GENERAL",
+    "진로와개척": "BALANCE_GENERAL",
+    "융복합": "BALANCE_GENERAL",
+}
 
 
-# 1. 학점 요약 + 레이더 차트
+def bucket_category(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    normalized = raw.strip()
+    if not normalized:
+        return None
+    normalized_key = normalized.upper().replace(" ", "_")
+    if normalized_key in SUMMARY_KEY_SET:
+        return normalized_key
+    mapped = CATEGORY_BUCKETS.get(normalized) or CATEGORY_BUCKETS.get(normalized_key)
+    if not mapped:
+        return None
+    mapped_key = mapped.upper().replace(" ", "_")
+    if mapped_key in SUMMARY_KEY_SET:
+        return mapped_key
+    return None
 
 
 class CreditSummaryItem(BaseModel):
@@ -17,106 +71,97 @@ class CreditSummaryItem(BaseModel):
 
 
 class RadarItem(BaseModel):
-    label: str     # 예: 전공 / 교양 / 선택
-    rate: float    # 0.0 ~ 1.0
+    label: str
+    rate: float
 
 
 class CreditSummaryResponse(BaseModel):
     total: CreditSummaryItem
-    major: CreditSummaryItem
-    general: CreditSummaryItem
-    elective: CreditSummaryItem
+    major_required: CreditSummaryItem
+    major_elective: CreditSummaryItem
+    core_general: CreditSummaryItem
+    balance_general: CreditSummaryItem
     radar: List[RadarItem]
+
+
+def build_empty_summary() -> CreditSummaryResponse:
+    zero_total = CreditSummaryItem(acquired=0, required=0)
+    zeros = {key: CreditSummaryItem(acquired=0, required=0) for key in SUMMARY_KEYS}
+    radar_items = [RadarItem(label=label, rate=0.0) for _, label in SUMMARY_BUCKETS]
+    return CreditSummaryResponse(
+        total=zero_total,
+        major_required=zeros["MAJOR_REQUIRED"],
+        major_elective=zeros["MAJOR_ELECTIVE"],
+        core_general=zeros["CORE_GENERAL"],
+        balance_general=zeros["BALANCE_GENERAL"],
+        radar=radar_items,
+    )
+
 
 @router.get("/credit-summary", response_model=CreditSummaryResponse)
 async def get_credit_summary(user=Depends(get_current_user)):
     db = get_db()
 
-    # 1) 학생 정보 조회
     student = await db.students.find_one({"student_id": user["student_id"]})
     if not student:
-        # 학생 문서가 아직 없으면 0으로 채운 기본 응답 반환
-        zero_item = CreditSummaryItem(acquired=0, required=0)
-        radar = [
-            RadarItem(label="전공",   rate=0.0),
-            RadarItem(label="교양",   rate=0.0),
-            RadarItem(label="선택",   rate=0.0),
-        ]
-        return CreditSummaryResponse(
-            total=zero_item,
-            major=zero_item,
-            general=zero_item,
-            elective=zero_item,
-            radar=radar,
-        )
+        return build_empty_summary()
 
     version = student.get("requirement_version")
     if not version:
-        # requirement_version 이 없을 때도 0으로 응답 (원하면 여기도 에러로 바꿀 수 있음)
-        zero_item = CreditSummaryItem(acquired=0, required=0)
-        radar = [
-            RadarItem(label="전공",   rate=0.0),
-            RadarItem(label="교양",   rate=0.0),
-            RadarItem(label="선택",   rate=0.0),
-        ]
-        return CreditSummaryResponse(
-            total=zero_item,
-            major=zero_item,
-            general=zero_item,
-            elective=zero_item,
-            radar=radar,
-        )
+        return build_empty_summary()
 
-    # 2) 졸업요건 로드
-    reqs: Dict[str, dict] = {}
+    required_map = {key: 0 for key in SUMMARY_KEYS}
+    total_required_override = 0
     cursor = db.requirements.find({"requirement_version": version})
     async for r in cursor:
-        reqs[r["category"]] = r
+        bucket = bucket_category(r.get("category"))
+        required_value = int(r.get("required_credits", 0))
+        if bucket and bucket in required_map:
+            required_map[bucket] = required_value
+        else:
+            raw = (r.get("category") or "").strip().upper().replace(" ", "_")
+            if raw == "TOTAL":
+                total_required_override = required_value
 
-    # 3) 이수 과목 집계
-    enrolls = await db.enrollments.find(
+    enrollments = await db.enrollments.find(
         {"student_id": user["student_id"], "status": "COMPLETED"}
     ).to_list(None)
+    acquired = {key: 0 for key in SUMMARY_KEYS}
+    for enroll in enrollments:
+        credits = int(enroll.get("credits") or 0)
+        bucket = bucket_category(enroll.get("category"))
+        if (not credits or not bucket) and enroll.get("course_code"):
+            course = await db.courses.find_one({"course_code": enroll["course_code"]})
+            if course:
+                if not credits:
+                    credits = int(course.get("credits", 0))
+                if not bucket:
+                    bucket = bucket_category(course.get("category"))
+        if bucket in acquired and credits:
+            acquired[bucket] += credits
 
-    acquired = {"MAJOR": 0, "GENERAL": 0, "ELECTIVE": 0}
-
-    for e in enrolls:
-        course = await db.courses.find_one({"course_code": e["course_code"]})
-        if not course:
-            continue
-
-        cat = course.get("category", "")
-        credits = int(course.get("credits", 0))
-
-        if cat in acquired:
-            acquired[cat] += credits
-
-    def req(cat: str) -> int:
-        d = reqs.get(cat)
-        if not d:
-            return 0
-        return int(d.get("required_credits", 0))
-
-    total_req = req("TOTAL") or req("MAJOR") + req("GENERAL") + req("ELECTIVE")
-    total_acc = acquired["MAJOR"] + acquired["GENERAL"] + acquired["ELECTIVE"]
+    total_required = total_required_override or sum(required_map.values())
+    total_acquired = sum(acquired.values())
 
     radar: List[RadarItem] = []
-    for cat, label in [("MAJOR", "전공"), ("GENERAL", "교양"), ("ELECTIVE", "선택")]:
-        r = req(cat)
-        a = acquired[cat]
-        rate = float(a / r) if r > 0 else 0.0
+    for key, label in SUMMARY_BUCKETS:
+        req_value = required_map[key]
+        acc_value = acquired[key]
+        rate = float(acc_value / req_value) if req_value > 0 else 0.0
         radar.append(RadarItem(label=label, rate=rate))
 
+    def make_item(key: str) -> CreditSummaryItem:
+        return CreditSummaryItem(acquired=acquired[key], required=required_map[key])
+
     return CreditSummaryResponse(
-        total=CreditSummaryItem(acquired=total_acc, required=total_req),
-        major=CreditSummaryItem(acquired=acquired["MAJOR"], required=req("MAJOR")),
-        general=CreditSummaryItem(acquired=acquired["GENERAL"], required=req("GENERAL")),
-        elective=CreditSummaryItem(acquired=acquired["ELECTIVE"], required=req("ELECTIVE")),
+        total=CreditSummaryItem(acquired=total_acquired, required=total_required),
+        major_required=make_item("MAJOR_REQUIRED"),
+        major_elective=make_item("MAJOR_ELECTIVE"),
+        core_general=make_item("CORE_GENERAL"),
+        balance_general=make_item("BALANCE_GENERAL"),
         radar=radar,
     )
 
-
-# 2. 전공 필수 과목 체크리스트
 
 class RequiredCourseItem(BaseModel):
     course_code: str
@@ -131,30 +176,25 @@ class RequiredCoursesResponse(BaseModel):
 @router.get("/required-courses", response_model=RequiredCoursesResponse)
 async def get_required_courses(user=Depends(get_current_user)):
     db = get_db()
-    # 전공필수 = courses.is_required == True
     cursor = db.courses.find({"is_required": True})
-    required = [c async for c in cursor]
+    required_courses = [doc async for doc in cursor]
 
-    completed = db.enrollments.find(
+    completed_cursor = db.enrollments.find(
         {"student_id": user["student_id"], "status": "COMPLETED"},
-        projection={"course_code": 1, "_id": 0}
+        projection={"course_code": 1, "_id": 0},
     )
-    completed_codes = {e["course_code"] async for e in completed}
+    completed_codes = {doc["course_code"] async for doc in completed_cursor}
 
-    items = []
-    for c in required:
-        items.append(
-            RequiredCourseItem(
-                course_code=c["course_code"],
-                name=c["name"],
-                is_completed=c["course_code"] in completed_codes
-            )
+    items = [
+        RequiredCourseItem(
+            course_code=course["course_code"],
+            name=course["name"],
+            is_completed=course["course_code"] in completed_codes,
         )
-
+        for course in required_courses
+    ]
     return RequiredCoursesResponse(required_courses=items)
 
-
-# 3. 학기별 평균 평점
 
 class SemesterGPAItem(BaseModel):
     year: int
@@ -189,33 +229,31 @@ async def get_semester_gpa(user=Depends(get_current_user)):
     ]
 
     data = await db.enrollments.aggregate(pipeline).to_list(None)
-
-    semesters = []
-    for d in data:
-        y = d["_id"]["year"]
-        s = d["_id"]["semester"]
-        total_c = d["total_credits"] or 0
-        gpa = (d["total_gp"] / total_c) if total_c > 0 else 0.0
-
+    semesters: List[SemesterGPAItem] = []
+    for entry in data:
+        year = entry["_id"]["year"]
+        semester = entry["_id"]["semester"]
+        total_credits = entry["total_credits"] or 0
+        gpa = (entry["total_gp"] / total_credits) if total_credits > 0 else 0.0
         semesters.append(
             SemesterGPAItem(
-                year=y,
-                semester=s,
+                year=year,
+                semester=semester,
                 gpa=round(gpa, 2),
-                credits=total_c
+                credits=total_credits,
             )
         )
 
     return SemesterGPAResponse(semesters=semesters)
 
 
-# 4. 선호 키워드 관리
-
 @router.get("/keywords", response_model=List[str])
 async def get_keywords(user=Depends(get_current_user)):
     db = get_db()
-    stu = await db.students.find_one({"student_id": user["student_id"]})
-    return stu.get("keywords", [])
+    student = await db.students.find_one({"student_id": user["student_id"]})
+    if not student:
+        return []
+    return student.get("keywords", [])
 
 
 class KeywordAdd(BaseModel):
@@ -225,11 +263,12 @@ class KeywordAdd(BaseModel):
 @router.post("/keywords", response_model=dict)
 async def add_keyword(payload: KeywordAdd, user=Depends(get_current_user)):
     db = get_db()
-    kw = payload.keyword.strip()
-
+    keyword = payload.keyword.strip()
+    if not keyword:
+        raise HTTPException(status_code=400, detail="Keyword is required")
     await db.students.update_one(
         {"student_id": user["student_id"]},
-        {"$addToSet": {"keywords": kw}}
+        {"$addToSet": {"keywords": keyword}},
     )
     return {"message": "added"}
 
@@ -239,6 +278,6 @@ async def delete_keyword(keyword: str, user=Depends(get_current_user)):
     db = get_db()
     await db.students.update_one(
         {"student_id": user["student_id"]},
-        {"$pull": {"keywords": keyword}}
+        {"$pull": {"keywords": keyword}},
     )
     return {"message": "removed"}

@@ -60,7 +60,7 @@ async def fetch_courses(db) -> List[Dict[str, Any]]:
 
 
 def build_enrollment(student_id: str, course: Dict[str, Any]) -> Dict[str, Any]:
-    status = random.choices(["COMPLETED", "ENROLLED"], weights=[0.7, 0.3])[0]
+    status = random.choices(["COMPLETED", "ENROLLED"], weights=[1, 0])[0]
 
     course_category = course.get("category", "")
     default_credits = 3 if "전공" in course_category else 2

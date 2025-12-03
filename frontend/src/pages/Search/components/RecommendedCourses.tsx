@@ -51,7 +51,7 @@ export const RecommendedCourses: React.FC<RecommendedCoursesProps> = ({
                       {priorityCopy[course.priority].label}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {course.category} · {course.semester}
+                      {course.semester}
                     </span>
                   </div>
                   

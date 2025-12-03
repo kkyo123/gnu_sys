@@ -253,7 +253,7 @@ const LectureDetailModal: React.FC<Props> = ({
           <div className="lec-modal__info-item">
             <div className="lec-modal__info-label">학점</div>
             <div className="lec-modal__info-value">
-              {credits ? `${credits}학점` : "-"}
+              {credits ? `${credits}학점` : "3학점"}  
             </div>
           </div>
           <div className="lec-modal__info-item">

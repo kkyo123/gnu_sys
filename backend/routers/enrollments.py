@@ -20,7 +20,7 @@ CATEGORY_LABEL_MAP = {key: label for key, label in SUMMARY_BUCKETS}
 class EnrollmentBase(BaseModel):
     course_code: str
     year: int
-    semester: int # 1 or 2
+    semester: int  # 1 or 2
     status: EnrollmentStatus = "IN_PROGRESS"
     grade: Optional[str] = None
     grade_point: Optional[float] = None
@@ -47,6 +47,14 @@ class EnrollmentPublic(EnrollmentBase):
     category_original: Optional[str] = None
     created_at: str
     updated_at: str
+
+    # 🔽 시간표 관련 필드 (seed 스크립트에서 넣는 값들)
+    day: Optional[int] = None
+    period_start: Optional[int] = None
+    period_duration: Optional[int] = None
+    classroom: Optional[str] = None
+    color_class: Optional[str] = None
+    source_tab: Optional[str] = None
 
 
 # ----- 내부 유틸 -----
@@ -76,6 +84,14 @@ def _to_public(doc: dict) -> EnrollmentPublic:
         category_original=doc.get("category_original"),
         created_at=doc.get("created_at") or now_iso(),
         updated_at=doc.get("updated_at") or now_iso(),
+
+        # 🔽 DB에 있으면 그대로 내보내고, 없으면 None
+        day=doc.get("day"),
+        period_start=doc.get("period_start"),
+        period_duration=doc.get("period_duration"),
+        classroom=doc.get("classroom"),
+        color_class=doc.get("color_class"),
+        source_tab=doc.get("source_tab"),
     )
 
 

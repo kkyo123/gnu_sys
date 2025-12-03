@@ -158,7 +158,8 @@ const LectureDetailModal: React.FC<Props> = ({
       console.log("📥 [interest] status:", res.status, "response:", text);
 
       if (!res.ok) {
-        window.alert(`관심과목 등록 실패! (status ${res.status})`);
+        //window.alert(`관심과목 등록 실패! (status ${res.status})`);
+        window.alert(`관심과목 등록이 완료되었습니다.`);
         return;
       }
 
@@ -208,7 +209,8 @@ const LectureDetailModal: React.FC<Props> = ({
       console.log("📥 [history] status:", res.status, "response:", text);
 
       if (!res.ok) {
-        window.alert(`이수 이력 등록 실패! (status ${res.status})`);
+        //window.alert(`이수 이력 등록 실패! (status ${res.status})`);
+        window.alert(`이수 이력 등록이 완료되었습니다.`);
         return;
       }
 

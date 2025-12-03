@@ -216,33 +216,6 @@ const {
           </section>
 
           <section className="space-y-3">
-            <h2 className="flex items-center gap-2">
-              <LineChart className="h-6 w-6 text-primary" />
-              학기별 GPA
-            </h2>
-            {semesterGpaError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-2">
-                <span>{semesterGpaError}</span>
-                <button type="button" className="underline" onClick={() => void refetchSemesterGpa()}>
-                  다시 시도
-                </button>
-              </div>
-            )}
-            {semesterGpaLoading ? (
-              <div className="rounded-lg border border-border p-6 animate-pulse space-y-4">
-                {Array.from({ length: 3 }).map((_, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="h-4 w-32 bg-muted rounded" />
-                    <div className="h-2 w-full bg-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <SemesterGpaTrend semesters={semesterGpa} />
-            )}
-          </section>
-
-          <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2">
                 <Calendar className="h-6 w-6 text-primary" />

@@ -58,6 +58,7 @@ export interface EnrollmentItem {
   status: string;
   category?: string | null;
   category_label?: string | null;
+  category_original?: string | null;
   grade?: string | null;
   grade_point?: number | null;
   credits?: number | null;

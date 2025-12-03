@@ -39,9 +39,10 @@ class EnrollmentUpdate(BaseModel):
 class EnrollmentPublic(EnrollmentBase):
     id: str
     student_id: str
-    category: Optional[str] = None
     course_name: Optional[str] = None
+    category: Optional[str] = None
     category_label: Optional[str] = None
+    category_original: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -64,9 +65,10 @@ def _to_public(doc: dict) -> EnrollmentPublic:
         grade=doc.get("grade"),
         grade_point=doc.get("grade_point"),
         credits=doc.get("credits"),
-        category=doc.get("category"),
         course_name=doc.get("course_name"),
+        category=doc.get("category"),
         category_label=doc.get("category_label"),
+        category_original=doc.get("category_original"),
         created_at=doc.get("created_at") or now_iso(),
         updated_at=doc.get("updated_at") or now_iso(),
     )
@@ -82,12 +84,19 @@ async def _ensure_course_info(doc: dict, db):
             if not doc.get("category"):
                 doc["category"] = course.get("category")
 
+    raw_category = doc.get("category_original") or doc.get("category")
+    if raw_category:
+        doc["category_original"] = raw_category
+
     bucket = bucket_category(doc.get("category"))
     if bucket:
         doc["category"] = bucket
         doc["category_label"] = CATEGORY_LABEL_MAP.get(bucket, bucket)
     elif doc.get("category"):
         doc["category_label"] = doc["category"]
+    else:
+        doc["category_label"] = None
+
     return doc
 
 
@@ -146,6 +155,7 @@ async def create_enrollment(
     doc["course_name"] = course.get("name")
     course_category = course.get("category")
     if course_category:
+        doc["category_original"] = course_category
         bucket = bucket_category(course_category)
         doc["category"] = bucket or course_category
         if bucket:

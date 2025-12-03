@@ -1,6 +1,6 @@
 // src/pages/Search/Graduation.tsx
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { graduationData as initialData } from '../../data/graduation';
 import type { Certification, GraduationData, CourseRecommendation } from '../../types/graduation';
 
@@ -9,10 +9,12 @@ import { CertificationCard } from './components/CertificationCard';
 import { GraduationOverview } from './components/GraduationOverview';
 import { RecommendedCourses } from './components/RecommendedCourses';
 import { RequirementGrid } from './components/RequirementGrid';
-import { CreditOverviewSection } from '../Mypage/CreditOverviewSection';
+import { CreditOverviewSection } from '../mypage/CreditOverviewSection';
 
 import LectureDetailModal from '../../components/LectureDetailModal';
 import type { CourseOut } from '../../components/lectureCard';
+import { useEnrollments } from '../mypage/hooks';
+import type { EnrollmentItem } from '../../lib/api/mypage';
 
 const API_BASE = (import.meta as any).env.VITE_API_BASE_URL as string;
 
@@ -27,6 +29,12 @@ const Graduation: React.FC<GraduationProps> = ({ token, user }) => {
 
   const [selectedCourse, setSelectedCourse] = useState<CourseOut | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const {
+    enrollments,
+    loading: enrollmentsLoading,
+    error: enrollmentsError,
+  } = useEnrollments(token);
 
   if (!token || !user) {
     return (
@@ -101,6 +109,48 @@ const Graduation: React.FC<GraduationProps> = ({ token, user }) => {
     }
   };
 
+  // 균형교양 8개 영역에 대해, 수강한 과목의 category_original/label을 매핑해 완료 학점을 집계한다.
+  const BALANCED_MAP: Record<string, string> = {
+    문학과문화: 'literature',
+    문학과문학: 'literature',
+    역사와철학: 'history-philosophy',
+    인간과사회: 'human-society',
+    생명과환경: 'life-environment',
+    과학과기술: 'science-tech',
+    예술과체육: 'art-sport',
+    진로탐색: 'career',
+    융복합: 'convergence',
+  };
+
+  const normalizeKey = (value: string) => value.replace(/\s+/g, '').toLowerCase();
+
+  const balancedFromEnrollments = useMemo(() => {
+    if (!enrollments.length) return balancedAreas;
+
+    const areaCredits: Record<string, number> = {};
+    enrollments.forEach((e: EnrollmentItem) => {
+      const raw = (e.category_original ?? e.category_label ?? e.category ?? '').toString().trim();
+      if (!raw) return;
+      let areaId = BALANCED_MAP[raw] ?? BALANCED_MAP[normalizeKey(raw)];
+      if (!areaId) {
+        // 부분 문자열로도 매칭 시도 (예: 줄임표 등)
+        const hit = Object.keys(BALANCED_MAP).find((key) => normalizeKey(raw).includes(normalizeKey(key)));
+        if (!hit) return;
+        const area = BALANCED_MAP[hit];
+        if (!area) return;
+        areaId = area;
+      }
+      if (!areaId) return;
+      const credits = Number(e.credits ?? 0);
+      areaCredits[areaId] = (areaCredits[areaId] ?? 0) + (Number.isFinite(credits) ? credits : 0);
+    });
+
+    return balancedAreas.map((area) => ({
+      ...area,
+      completedCredits: areaCredits[area.id] ?? area.completedCredits,
+    }));
+  }, [balancedAreas, enrollments]);
+
   return (
     <>
       <main className="container mx-auto px-4 py-6">
@@ -114,7 +164,10 @@ const Graduation: React.FC<GraduationProps> = ({ token, user }) => {
           <CreditOverviewSection token={token} />
         </div>
 
-        <BalancedAreasCard areas={balancedAreas} />
+        {enrollmentsError && (
+          <p className="text-sm text-red-600 mb-2">수강이력 조회 중 오류가 발생했습니다.</p>
+        )}
+        <BalancedAreasCard areas={balancedFromEnrollments} />
         <CertificationCard certifications={certifications} onSave={handleSaveCertifications} />
 
         <RecommendedCourses

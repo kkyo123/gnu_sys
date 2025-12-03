@@ -8,6 +8,10 @@ from routers.auth import get_current_user
 router = APIRouter(tags=["Graduation"])
 
 
+# ---------------------------
+# Pydantic Models
+# ---------------------------
+
 class CategoryStatus(BaseModel):
     acquired: int        # 이미 이수한 학점
     required: int        # 졸업요건 학점
@@ -29,11 +33,22 @@ class QualificationStatus(BaseModel):
     is_passed: bool           # 둘 다 기준 이상인지
 
 
+# 프론트에서 쓰는 RequirementKey (camelCase)
+RequirementKey = Literal[
+    "majorRequired",
+    "majorElective",
+    "coreGeneral",
+    "balanceGeneral",
+]
+
+
 class GraduationStatusResponse(BaseModel):
     total: CategoryStatus                 # 전체 학점 요약
     categories: Dict[str, CategoryStatus] # "MAJOR", "GENERAL", "ELECTIVE" 등
     gpa: GPAStatus
     qualification: QualificationStatus
+    # RequirementKey 단위 디테일
+    requirement_details: Dict[RequirementKey, CategoryStatus]
 
 
 class RecommendedCourse(BaseModel):
@@ -52,34 +67,119 @@ class RecommendedCoursesResponse(BaseModel):
     courses: List[RecommendedCourse]
 
 
+# ---------------------------
+# Helpers
+# ---------------------------
+
 async def _load_student_and_requirements(student_id: str):
-    """학생 문서와 requirement_version에 해당하는 졸업요건 문서들을 불러온다."""
+    """
+    학생 문서와 admission_year + major 에 해당하는 졸업요건 문서들을 불러온다.
+    graduation_requirements 컬렉션의 requirement_key 를 기준으로 dict 구성.
+    """
     student = await db.students.find_one({"student_id": student_id})
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    version = student.get("requirement_version")
-    if not version:
-        raise HTTPException(status_code=400, detail="requirement_version not set")
+    admission_year = student.get("admission_year")
+    major = student.get("major")  # 필드명 다르면 여기 수정
+
+    if admission_year is None or major is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Student must have admission_year and major set",
+        )
 
     requirements: Dict[str, dict] = {}
-    async for r in db.requirements.find({"requirement_version": version}):
-        cat = r.get("category")
-        if cat:
-            requirements[cat] = r
+
+    cursor = db.graduation_requirements.find(
+        {"admission_year": admission_year, "major": major}
+    )
+    async for r in cursor:
+        key = r.get("requirement_key")
+        if key:
+            requirements[key] = r
 
     return student, requirements
 
 
-def _get_required_credits(requirements: Dict[str, dict], category: str) -> int:
-    doc = requirements.get(category)
+def _get_required_credits(requirements: Dict[str, dict], key: str) -> int:
+    """
+    key 는 DB graduation_requirements.requirement_key 값
+    (예: 'major_required', 'core_general')
+    """
+    doc = requirements.get(key)
     if not doc:
         return 0
-    # 학점 요건이 없는 카테고리(MIN_GPA 등)는 0으로 처리
     return int(doc.get("required_credits", 0) or 0)
 
 
+def _get_required_gpa(requirements: Dict[str, dict]) -> float:
+    """
+    최소 평점 요건: requirement_key = 'min_gpa' 문서의 required_gpa 사용
+    """
+    doc = requirements.get("min_gpa")
+    if not doc:
+        return 0.0
+    return float(doc.get("required_gpa", 0.0) or 0.0)
+
+
+def _get_required_cert_counts(requirements: Dict[str, dict]):
+    """
+    자격인증 요건:
+      - 필수:  requirement_key = 'qual_required'
+      - 선택:  requirement_key = 'qual_optional'
+    """
+    req_doc = requirements.get("qual_required", {}) or {}
+    opt_doc = requirements.get("qual_optional", {}) or {}
+
+    req_required = int(req_doc.get("required_count", 0) or 0)
+    opt_required = int(opt_doc.get("required_count", 0) or 0)
+    return req_required, opt_required
+
+
+def _map_course_to_requirement_key(course: dict) -> Optional[str]:
+    """
+    과목의 category + sub_category 를 graduation_requirements.requirement_key 로 매핑.
+    DB의 sub_category 값을 기준으로 조건만 맞춰주면 됨.
+    """
+    cat = course.get("category")
+    sub = course.get("sub_category")
+
+    # 전공 필수/선택
+    if cat == "MAJOR":
+        if sub == "전공필수":
+            return "major_required"
+        elif sub == "전공선택":
+            return "major_elective"
+        # sub_category 없으면 전공선택으로 취급
+        return "major_elective"
+
+    # 교양(핵심/균형)
+    if cat == "GENERAL":
+        if sub in ("핵심교양", "핵심교양필수"):
+            return "core_general"
+        if sub in ("균형교양", "균형교양필수"):
+            return "balance_general"
+
+    return None
+
+
+def _make_status(acquired: int, required: int) -> CategoryStatus:
+    remaining = required - acquired
+    if remaining < 0:
+        remaining = 0
+    passed = acquired >= required if required > 0 else True
+    return CategoryStatus(
+        acquired=acquired,
+        required=required,
+        remaining=remaining,
+        is_passed=passed,
+    )
+
+
+# ---------------------------
 # 졸업요건 현황
+# ---------------------------
 
 @router.get("/graduation/status", response_model=GraduationStatusResponse)
 async def get_graduation_status(user=Depends(get_current_user)):
@@ -92,80 +192,93 @@ async def get_graduation_status(user=Depends(get_current_user)):
     ).to_list(None)
 
     acquired_by_cat: Dict[str, int] = {}
+    # 내부 집계용: DB requirement_key 기준
+    acquired_by_key: Dict[str, int] = {
+        "major_required": 0,
+        "major_elective": 0,
+        "core_general": 0,
+        "balance_general": 0,
+    }
+
     total_credits = 0
     total_gp = 0.0
     total_for_gpa = 0
 
-    # 카테고리별 학점 + GPA 계산
+    # 카테고리별 학점 + GPA + requirement_key별 학점 계산
     for e in enrolls:
         course = await db.courses.find_one({"course_code": e["course_code"]})
         if not course:
             continue
 
         cat = course.get("category", "OTHER")
-        credits = int(course.get("credits", 0))
+        credits = int(course.get("credits", 0) or 0)
 
+        # category 기준(전공/교양/자유선택) 집계
         if cat not in acquired_by_cat:
             acquired_by_cat[cat] = 0
         acquired_by_cat[cat] += credits
 
         total_credits += credits
 
+        # GPA
         gp = e.get("grade_point")
         if gp is not None:
             total_gp += gp * credits
             total_for_gpa += credits
 
-    # GPA
+        # requirement_key 기준(전공필수/전선/핵심/균형) 집계
+        req_key = _map_course_to_requirement_key(course)
+        if req_key:
+            acquired_by_key[req_key] = acquired_by_key.get(req_key, 0) + credits
+
+    # GPA 계산
     if total_for_gpa > 0:
         current_gpa = round(total_gp / total_for_gpa, 2)
     else:
         current_gpa = 0.0
-    required_gpa = float(requirements.get("MIN_GPA", {}).get("required_gpa", 0.0) or 0.0)
 
-    # 카테고리별 상태
-    def make_status(cat: str) -> CategoryStatus:
-        required = _get_required_credits(requirements, cat)
-        acquired = acquired_by_cat.get(cat, 0)
-        remaining = required - acquired
-        if remaining < 0:
-            remaining = 0
-        if required > 0:
-            passed = acquired >= required
-        else:
-            passed = True
-        return CategoryStatus(
-            acquired=acquired,
-            required=required,
-            remaining=remaining,
-            is_passed=passed,
+    required_gpa = _get_required_gpa(requirements)
+
+    # 카테고리별(상위 개념: MAJOR / GENERAL / ELECTIVE) 상태
+    categories: Dict[str, CategoryStatus] = {}
+
+    # 전공: 전공필수 + 전공선택
+    major_required_total = (
+        _get_required_credits(requirements, "major_required")
+        + _get_required_credits(requirements, "major_elective")
+    )
+    major_acquired_total = (
+        acquired_by_key["major_required"] + acquired_by_key["major_elective"]
+    )
+    categories["MAJOR"] = _make_status(major_acquired_total, major_required_total)
+
+    # 교양: 핵심 + 균형
+    general_required_total = (
+        _get_required_credits(requirements, "core_general")
+        + _get_required_credits(requirements, "balance_general")
+    )
+    general_acquired_total = (
+        acquired_by_key["core_general"] + acquired_by_key["balance_general"]
+    )
+    categories["GENERAL"] = _make_status(general_acquired_total, general_required_total)
+
+    # 자유선택(ELECTIVE) – 필요하면 규칙 추가
+    elective_required = _get_required_credits(requirements, "free_elective")
+    elective_acquired = acquired_by_cat.get("ELECTIVE", 0)
+    categories["ELECTIVE"] = _make_status(elective_acquired, elective_required)
+
+    # 전체 학점
+    total_required_doc = requirements.get("total_credits")
+    if total_required_doc:
+        total_required = int(total_required_doc.get("required_credits", 0) or 0)
+    else:
+        total_required = (
+            major_required_total + general_required_total + elective_required
         )
 
-    categories: Dict[str, CategoryStatus] = {
-        "MAJOR": make_status("MAJOR"),
-        "GENERAL": make_status("GENERAL"),
-        "ELECTIVE": make_status("ELECTIVE"),
-    }
+    total_status = _make_status(total_credits, total_required)
 
-    # 전체 학점 요건
-    if "TOTAL" in requirements:
-        total_required = _get_required_credits(requirements, "TOTAL")
-    else:
-        total_required = 0
-        for c in categories.values():
-            total_required += c.required
-
-    total_remaining = total_required - total_credits
-    if total_remaining < 0:
-        total_remaining = 0
-
-    total_status = CategoryStatus(
-        acquired=total_credits,
-        required=total_required,
-        remaining=total_remaining,
-        is_passed=(total_credits >= total_required) if total_required > 0 else True,
-    )
-
+    # GPA 상태
     gpa_status = GPAStatus(
         current=current_gpa,
         required=required_gpa,
@@ -177,11 +290,7 @@ async def get_graduation_status(user=Depends(get_current_user)):
     acquired_req = int(cert.get("required_count", 0) or 0)
     acquired_opt = int(cert.get("optional_count", 0) or 0)
 
-    qual_req_doc = requirements.get("QUAL_REQUIRED", {}) or {}
-    qual_opt_doc = requirements.get("QUAL_OPTIONAL", {}) or {}
-
-    required_req = int(qual_req_doc.get("required_credits", 0) or 0)   # 필수 인증 요건
-    required_opt = int(qual_opt_doc.get("required_credits", 0) or 0)   # 선택 인증 요건
+    required_req, required_opt = _get_required_cert_counts(requirements)
 
     qualification_status = QualificationStatus(
         required_required=required_req,
@@ -191,15 +300,38 @@ async def get_graduation_status(user=Depends(get_current_user)):
         is_passed=(acquired_req >= required_req and acquired_opt >= required_opt),
     )
 
+    # 프론트용 requirement_details (camelCase Key로 변환)
+    requirement_details: Dict[RequirementKey, CategoryStatus] = {
+        "majorRequired": _make_status(
+            acquired_by_key["major_required"],
+            _get_required_credits(requirements, "major_required"),
+        ),
+        "majorElective": _make_status(
+            acquired_by_key["major_elective"],
+            _get_required_credits(requirements, "major_elective"),
+        ),
+        "coreGeneral": _make_status(
+            acquired_by_key["core_general"],
+            _get_required_credits(requirements, "core_general"),
+        ),
+        "balanceGeneral": _make_status(
+            acquired_by_key["balance_general"],
+            _get_required_credits(requirements, "balance_general"),
+        ),
+    }
+
     return GraduationStatusResponse(
         total=total_status,
         categories=categories,
         gpa=gpa_status,
         qualification=qualification_status,
+        requirement_details=requirement_details,
     )
 
 
-# 졸업요건 기반 추천 강의 로직
+# ---------------------------
+# 졸업요건 기반 추천 강의
+# ---------------------------
 
 @router.get(
     "/graduation/recommended-courses",
@@ -234,14 +366,21 @@ async def get_recommended_courses(user=Depends(get_current_user)):
             acquired_by_cat[cat] = 0
         acquired_by_cat[cat] += credits
 
-    major_required = _get_required_credits(requirements, "MAJOR")
-    general_required = _get_required_credits(requirements, "GENERAL")
+    # 전공/교양 부족분
+    major_required_total = (
+        _get_required_credits(requirements, "major_required")
+        + _get_required_credits(requirements, "major_elective")
+    )
+    general_required_total = (
+        _get_required_credits(requirements, "core_general")
+        + _get_required_credits(requirements, "balance_general")
+    )
 
     major_acquired = acquired_by_cat.get("MAJOR", 0)
     general_acquired = acquired_by_cat.get("GENERAL", 0)
 
-    major_remaining = max(major_required - major_acquired, 0)
-    general_remaining = max(general_required - general_acquired, 0)
+    major_remaining = max(major_required_total - major_acquired, 0)
+    general_remaining = max(general_required_total - general_acquired, 0)
 
     # 전체 과목 중 아직 안 들은 과목들
     courses_cur = db.courses.find({})
@@ -268,7 +407,7 @@ async def get_recommended_courses(user=Depends(get_current_user)):
         # 전공필수/핵심교양필수 등 "Must" 후보
         if sub_cat == "전공필수" and major_remaining > 0:
             score += 4.0
-        if sub_cat == "핵심교양필수" and general_remaining > 0:
+        if sub_cat in ("핵심교양", "핵심교양필수") and general_remaining > 0:
             score += 3.5
 
         # 전공/교양 부족분에 따른 가점
@@ -308,8 +447,6 @@ async def get_recommended_courses(user=Depends(get_current_user)):
         )
         results.append(rec)
 
-    # 높은 점수 순으로 정렬
+    # 높은 점수 순 정렬 후 상위 50개
     results.sort(key=lambda x: x.score, reverse=True)
-
-    # 많으면 앞쪽 일부만
     return RecommendedCoursesResponse(courses=results[:50])

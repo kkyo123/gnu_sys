@@ -1,4 +1,9 @@
-﻿from fastapi import FastAPI
+﻿from typing import List, Optional, Literal
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from database.connection import db, now_iso
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import connection
 from routers import courses, evaluations, requirements

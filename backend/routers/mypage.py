@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Literal
 
-from database.connection import get_db
+from database.connection import get_db, now_iso
 from routers.auth import get_current_user
 
 router = APIRouter(tags=["MyPage"])
@@ -283,3 +283,233 @@ async def delete_keyword(keyword: str, user=Depends(get_current_user)):
         {"$pull": {"keywords": keyword}},
     )
     return {"message": "removed"}
+
+# -------------------------- 이수 이력(수강 내역) -------------------------- #
+
+class HistoryCourse(BaseModel):
+    course_code: str
+    course_name: str
+    category: str         # 전공필수/전공선택/핵심교양/균형교양/기초교양 등
+    credits: int = 0
+
+
+class CourseHistoryCreate(BaseModel):
+    semester: str         # "2024-1" 같은 형식
+    course: HistoryCourse
+
+
+@router.post("/history", response_model=dict)
+async def add_course_history(
+    payload: CourseHistoryCreate,
+    user = Depends(get_current_user),
+):
+    """
+    이수 이력 등록/수정
+    - 컬렉션: course_histories
+    - 같은 student_id + semester + course_code 조합은 upsert
+    """
+    db = get_db()
+
+    doc = {
+        "student_id": user["student_id"],
+        "semester": payload.semester,
+        "course_code": payload.course.course_code,
+        "course_name": payload.course.course_name,
+        "category": payload.course.category,
+        "credits": payload.course.credits,
+        "status": "COMPLETED",
+        "updated_at": now_iso(),
+    }
+
+    await db.course_histories.update_one(
+        {
+            "student_id": user["student_id"],
+            "semester": payload.semester,
+            "course_code": payload.course.course_code,
+        },
+        {
+            "$setOnInsert": {"created_at": now_iso()},
+            "$set": doc,
+        },
+        upsert=True,
+    )
+    return {"message": "saved"}
+
+
+@router.get("/history", response_model=dict)
+async def get_course_history(user = Depends(get_current_user)):
+    """
+    로그인한 학생의 이수 이력을 학기별로 묶어서 반환
+    {
+      "bySemester": {
+        "2024-1": [ { course_code, course_name, category, credits }, ... ],
+        "2024-2": [ ... ]
+      }
+    }
+    """
+    db = get_db()
+
+    cursor = db.course_histories.find({"student_id": user["student_id"]})
+    by_semester: dict[str, list] = {}
+
+    async for doc in cursor:
+        sem = doc.get("semester", "unknown")
+        item = {
+            "course_code": doc.get("course_code"),
+            "course_name": doc.get("course_name"),
+            "category": doc.get("category"),
+            "credits": int(doc.get("credits", 0) or 0),
+        }
+        by_semester.setdefault(sem, []).append(item)
+
+    return {"bySemester": by_semester}
+
+
+@router.get("/history/summary", response_model=dict)
+async def get_history_summary(user = Depends(get_current_user)):
+    """
+    이수 이력 기반 카테고리별 학점 합계
+    {
+      "bySemester": { ... },
+      "byCategory": {
+        "전공필수": 18,
+        "전공선택": 9,
+        "핵심교양": 6,
+        "균형교양": 9,
+        "기초교양": 6
+      }
+    }
+    """
+    db = get_db()
+
+    cursor = db.course_histories.find({"student_id": user["student_id"]})
+    by_semester: dict[str, list] = {}
+    by_category: dict[str, int] = {}
+
+    async for doc in cursor:
+        sem = doc.get("semester", "unknown")
+        category = doc.get("category", "기타")
+        credits = int(doc.get("credits", 0) or 0)
+
+        item = {
+            "course_code": doc.get("course_code"),
+            "course_name": doc.get("course_name"),
+            "category": category,
+            "credits": credits,
+        }
+
+        by_semester.setdefault(sem, []).append(item)
+        by_category[category] = by_category.get(category, 0) + credits
+
+    return {
+        "bySemester": by_semester,
+        "byCategory": by_category,
+    }
+
+# ----------------------------- 관심과목 ----------------------------- #
+
+InterestTab = Literal["current", "custom", "system", "graduation"]
+
+
+class InterestCreate(BaseModel):
+    tab: InterestTab
+    course_code: str
+    course_name: str
+    professor: Optional[str] = None
+    credits: Optional[int] = None
+
+
+class InterestDelete(BaseModel):
+    tab: InterestTab
+    course_code: str
+
+
+@router.post("/interest", response_model=dict)
+async def add_interest_course(
+    payload: InterestCreate,
+    user = Depends(get_current_user),
+):
+    """
+    관심과목 등록/수정
+    - 컬렉션: interests
+    - 같은 student_id + tab + course_code 조합은 upsert
+    """
+    db = get_db()
+
+    doc = {
+        "student_id": user["student_id"],
+        "tab": payload.tab,
+        "course_code": payload.course_code,
+        "course_name": payload.course_name,
+        "professor": payload.professor,
+        "credits": payload.credits,
+        "updated_at": now_iso(),
+    }
+
+    await db.interests.update_one(
+        {
+            "student_id": user["student_id"],
+            "tab": payload.tab,
+            "course_code": payload.course_code,
+        },
+        {
+            "$setOnInsert": {"created_at": now_iso()},
+            "$set": doc,
+        },
+        upsert=True,
+    )
+    return {"message": "saved"}
+
+
+@router.get("/interest", response_model=dict)
+async def list_interest_courses(
+    tab: Optional[InterestTab] = None,
+    user = Depends(get_current_user),
+):
+    """
+    관심과목 조회
+    - tab 파라미터를 주면 해당 탭만, 안 주면 전체
+    """
+    db = get_db()
+
+    query: dict = {"student_id": user["student_id"]}
+    if tab:
+        query["tab"] = tab
+
+    cursor = db.interests.find(query).sort([("tab", 1), ("course_code", 1)])
+    items: list[dict] = []
+
+    async for doc in cursor:
+        items.append(
+            {
+                "course_code": doc.get("course_code"),
+                "course_name": doc.get("course_name"),
+                "professor": doc.get("professor"),
+                "credits": doc.get("credits", 0),
+                "tab": doc.get("tab", "custom"),
+            }
+        )
+
+    return {"items": items}
+
+
+@router.delete("/interest", response_model=dict)
+async def remove_interest_course(
+    payload: InterestDelete,
+    user = Depends(get_current_user),
+):
+    """
+    관심과목 해제
+    """
+    db = get_db()
+
+    res = await db.interests.delete_one(
+        {
+            "student_id": user["student_id"],
+            "tab": payload.tab,
+            "course_code": payload.course_code,
+        }
+    )
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Interest not found")
+    return {"message": "deleted"}

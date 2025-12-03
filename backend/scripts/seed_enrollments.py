@@ -12,20 +12,20 @@ from motor.motor_asyncio import AsyncIOMotorClient
 # 필요하면 환경변수 COURSE_COLLECTIONS 로 덮어쓸 수 있게 해둠.
 COURSE_COLLECTIONS = os.getenv(
     "COURSE_COLLECTIONS",
-    "courses_2025_major,"
+    #"courses_2025_major,"
     "courses_2024_major,"
     "courses_2023_major_sci,"
     "courses_2023_major_sw,"
     "courses_2022_major_sci,"
     "courses_2022_major_sw,"
-    "courses_2021_major_sci,"
-    "courses_2021_major_sw,"
-    "courses_2021_major_bd,"
+    #"courses_2021_major_sci,"
+    #"courses_2021_major_sw,"
+    #"courses_2021_major_bd,"
     "courses_NormalStudy,"
     "core_general,"
     "balance_general,"
     "basic_general,"
-    "courses_Major2025"
+    #"courses_Major2025"
 ).split(",")
 
 
@@ -38,6 +38,7 @@ async def fetch_courses(db) -> List[Dict[str, Any]]:
     projection = {
         "_id": 0,
         "course_code": 1,
+        "course_name": 1,
         "name": 1,
         "credits": 1,
         "category": 1,
@@ -62,21 +63,19 @@ async def fetch_courses(db) -> List[Dict[str, Any]]:
 def build_enrollment(student_id: str, course: Dict[str, Any]) -> Dict[str, Any]:
     status = random.choices(["COMPLETED", "ENROLLED"], weights=[1, 0])[0]
 
-    course_category = course.get("category", "")
-    default_credits = 3 if "전공" in course_category else 2
-
+   
     try:
-        credits = int(course.get("credits", default_credits))
+        credits = int(course.get("credits", 0.5))
     except (ValueError, TypeError):
-        credits = default_credits
+        credits = 0.5
 
-
+    course_name = course.get("name") or course.get("course_name") or "Unknown Course"
 
     doc: Dict[str, Any] = {
         "student_id": student_id,
         "course_code": course["course_code"],
-        "course_name": course.get("name", ""),
-        "year": random.randint(2021, 2024),
+        "course_name": course_name,
+        "year": random.randint(2022, 2024),
         "semester": random.choice([1, 2]),
         "status": status,
         "credits": credits,

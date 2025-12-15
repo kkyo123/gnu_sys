@@ -8,8 +8,8 @@ import { SignupPage } from './pages/auth/SignupPage';
 import SignupSuccess from './pages/auth/SignupSuccess';
 import Dashboard from './pages/dashboard/Dashboard';
 import Search from './pages/Search/Search';
-import Recommend from './pages/Search/Recommend';
-import Graduation from './pages/Search/Graduation';
+import Recommend from './pages/recommend/Recommend';
+import Graduation from './pages/graduation/Graduation';
 import Mypage from './pages/mypage/mypage';
 
 type User = any;

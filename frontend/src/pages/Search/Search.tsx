@@ -228,30 +228,7 @@ export default function Search() {
         <h1>강의 검색</h1>
         <p className="text-muted-foreground mt-2">키워드로 원하는 강의를 찾아보세요</p>
       </div>
-      {/* --- BEGIN: First Course Quick View (temporary)}
-      {firstCourse && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>강의 검색 첫 번째 결과 상세</CardTitle>
-            <CardDescription>현재 검색 조건으로 반환된 첫 번째 강의 정보를 확인하세요.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <tbody>
-                  {[...firstCourseRows, ...firstCourseKeywordRows].map((row) => (
-                    <tr key={row.label} className="border-b last:border-0">
-                      <td className="py-2 pr-3 font-semibold text-muted-foreground text-xs uppercase">{row.label}</td>
-                      <td className="py-2">{row.value ?? '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      {/* --- END: First Course Quick View (temporary) --- */}
+      
       <div className="space-y-4 mb-6">
         <div className="flex gap-4">
           <div className="flex-1 relative">

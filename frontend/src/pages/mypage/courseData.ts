@@ -1,4 +1,4 @@
-import type { TimetableCourseStandard, CourseListItem } from '../../types/mypage';
+import type { TimetableCourseStandard, CourseListItem } from '@/types/mypage';
 
 export type CourseTab = 'custom' | 'system' | 'graduation';
 

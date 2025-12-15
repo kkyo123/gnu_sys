@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
-import type { TimetableCourse, Weekday } from '../../../types/mypage';
+import { Card, CardContent } from '@/components/ui/card';
+import type { TimetableCourse, Weekday } from '@/types/mypage';
 import { TimetableGrid } from './TimetableGrid';
 
 interface TimetableProps {

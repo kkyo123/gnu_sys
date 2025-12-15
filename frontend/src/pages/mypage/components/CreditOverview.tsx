@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Progress } from '../../../components/ui/progress';
-import type { AcademicData } from '../../../types/mypage';
-import { PROGRESS_CIRCUMFERENCE, PROGRESS_RADIUS, PROGRESS_STROKE } from '../constants';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import type { AcademicData } from '@/types/mypage';
+import { PROGRESS_CIRCUMFERENCE, PROGRESS_RADIUS, PROGRESS_STROKE } from '@/pages/Mypage/constants';
 
 interface CreditOverviewProps {
   academicData: AcademicData;

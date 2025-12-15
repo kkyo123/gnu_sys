@@ -1,4 +1,4 @@
-import type { MyPageUser, AcademicData, TimetableCourse, KeywordPrefs, TimetableCourseStandard } from '../../types/mypage';
+import type { MyPageUser, AcademicData, TimetableCourse, KeywordPrefs, TimetableCourseStandard } from '@/types/mypage';
 import { DEFAULT_SELECTED_KEYWORDS } from './keywordConfig';
 import {
   mockCoursesBySemester,

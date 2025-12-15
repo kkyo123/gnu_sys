@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calendar, Target, TrendingUp, ClipboardCheck } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '../../types/mypage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { AcademicData, KeywordPrefs, MyPageUser, TimetableCourseStandard } from '@/types/mypage';
 import {
   KeywordPreferences,
   MyPageSidebar,
@@ -14,8 +14,8 @@ import {
 import { CourseDebugTable } from './components/CourseDebugTable';
 import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
 import { toMainTimetable } from './courseTransforms';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { getKeywords, getMyTimetable } from '../../lib/api/mypage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { getKeywords, getMyTimetable } from '@/lib/api/mypage';
 import { mapKeywordsToPrefs } from './dataTransforms';
 import { useEnrollments, useRequiredCourses, useSemesterGpa } from './hooks';
 import { CreditOverviewSection } from './CreditOverviewSection';

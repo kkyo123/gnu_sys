@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import type { BalancedArea } from '../../../types/graduation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { BalancedArea } from '@/types/graduation';
 
 interface BalancedAreasCardProps {
   areas: BalancedArea[];

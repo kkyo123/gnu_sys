@@ -1,20 +1,20 @@
 // src/pages/Search/Graduation.tsx
 
 import React, { useMemo, useState } from 'react';
-import { graduationData as initialData } from '../../data/graduation';
-import type { Certification, GraduationData, CourseRecommendation } from '../../types/graduation';
+import { graduationData as initialData } from '@/data/graduation';
+import type { Certification, GraduationData, CourseRecommendation } from '@/types/graduation';
 
 import { BalancedAreasCard } from './components/BalancedAreasCard';
 import { CertificationCard } from './components/CertificationCard';
 import { GraduationOverview } from './components/GraduationOverview';
 import { RecommendedCourses } from './components/RecommendedCourses';
 import { RequirementGrid } from './components/RequirementGrid';
-import { CreditOverviewSection } from '../mypage/CreditOverviewSection';
+import { CreditOverviewSection } from '@/Mypage/CreditOverviewSection';
 
-import LectureDetailModal from '../../components/LectureDetailModal';
-import type { CourseOut } from '../../components/lectureCard';
-import { useEnrollments } from '../mypage/hooks';
-import type { EnrollmentItem } from '../../lib/api/mypage';
+import LectureDetailModal from '@/components/LectureDetailModal';
+import type { CourseOut } from '@/components/lectureCard';
+import { useEnrollments } from '@/Mypage/hooks';
+import type { EnrollmentItem } from '@/lib/api/mypage';
 
 const API_BASE = (import.meta as any).env.VITE_API_BASE_URL as string;
 

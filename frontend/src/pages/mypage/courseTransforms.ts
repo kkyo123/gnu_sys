@@ -1,4 +1,4 @@
-import type { TimetableCourse, TimetableCourseStandard } from '../../types/mypage';
+import type { TimetableCourse, TimetableCourseStandard } from '@/types/mypage';
 import type { Course as PreviewCourse } from './components/TimetableOnly';
 
 const tailwindToHex: Record<string, string> = {

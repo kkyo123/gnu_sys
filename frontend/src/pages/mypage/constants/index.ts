@@ -1,4 +1,4 @@
-import type { Weekday } from '../../../types/mypage';
+import type { Weekday } from '@/types/mypage';
 
 export const START_HOUR = 9; // timetable starts at 9시
 export const SLOT_COUNT = 9; // 9~17시까지 9개 슬롯

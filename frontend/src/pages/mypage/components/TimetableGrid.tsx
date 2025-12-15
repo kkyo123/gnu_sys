@@ -1,5 +1,5 @@
 import React from 'react';
-import type { TimetableCourse, Weekday } from '../../../types/mypage';
+import type { TimetableCourse, Weekday } from '@/types/mypage';
 
 interface TimetableGridProps {
   days: Record<Weekday, string>;

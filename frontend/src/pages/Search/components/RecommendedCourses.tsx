@@ -1,9 +1,9 @@
 import React from 'react';
 import { BookOpen, GraduationCap, Target, User } from 'lucide-react';
-import { Badge } from '../../../components/ui/badge';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import type { CourseDifficulty, CoursePriority, CourseRecommendation } from '../../../types/graduation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CourseDifficulty, CoursePriority, CourseRecommendation } from '@/types/graduation';
 
 const priorityCopy: Record<CoursePriority, { label: string; className: string }> = {
   high: { label: '전공필수', className: 'bg-red-100 text-red-700 hover:bg-red-100' },

@@ -1,13 +1,13 @@
 import React from 'react';
 import { Edit, BarChart3, Calendar, Target } from 'lucide-react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
-import { Badge } from '../../../components/ui/badge';
-import { Separator } from '../../../components/ui/separator';
-import type { MyPageUser, AcademicData } from '../../../types/mypage';
-import { MYPAGE_SECTION_IDS, type MyPageSectionId } from '../config';
-import type { KeywordGroupKey } from '../keywordConfig';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import type { MyPageUser, AcademicData } from '@/types/mypage';
+import { MYPAGE_SECTION_IDS, type MyPageSectionId } from '@/pages/Mypage/config';
+import type { KeywordGroupKey } from '@/pages/Mypage/keywordConfig';
 
 interface MyPageSidebarProps {
   user?: MyPageUser | null;

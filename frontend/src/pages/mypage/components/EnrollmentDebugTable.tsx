@@ -1,6 +1,6 @@
 import React from 'react';
-import type { EnrollmentItem } from '../../../lib/api/mypage';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import type { EnrollmentItem } from '@/lib/api/mypage';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface EnrollmentDebugTableProps {
   enrollments: EnrollmentItem[];

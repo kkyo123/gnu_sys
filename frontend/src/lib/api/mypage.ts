@@ -1,5 +1,5 @@
 import { request } from './client';
-import type { TimetableCourseStandard } from '../../types/mypage';
+import type { TimetableCourseStandard } from '@/types/mypage';
 
 type AuthHeaders = {
   Authorization: string;

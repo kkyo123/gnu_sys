@@ -6,7 +6,7 @@ import {
   type RequiredCourseItem,
   type SemesterGPAItem,
   type EnrollmentItem,
-} from '../../lib/api/mypage';
+} from '@/lib/api/mypage';
 
 export function useRequiredCourses(token?: string | null) {
   const [courses, setCourses] = useState<RequiredCourseItem[]>([]);

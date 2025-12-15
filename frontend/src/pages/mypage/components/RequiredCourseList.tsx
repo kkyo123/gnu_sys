@@ -1,7 +1,7 @@
 import React from 'react';
-import type { RequiredCourseItem } from '../../../lib/api/mypage';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
+import type { RequiredCourseItem } from '@/lib/api/mypage';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, CircleSlash } from 'lucide-react';
 
 interface RequiredCourseListProps {

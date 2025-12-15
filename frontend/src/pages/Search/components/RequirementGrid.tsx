@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Progress } from '../../../components/ui/progress';
-import type { CreditRequirement } from '../../../types/graduation';
-import { percent, remaining } from '../utils/graduation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import type { CreditRequirement } from '@/types/graduation';
+import { percent, remaining } from '@/utils/graduation';
 
 interface RequirementGridProps {
   requirements: CreditRequirement[];

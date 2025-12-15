@@ -1,4 +1,4 @@
-import type { GraduationData } from '../types/graduation';
+import type { GraduationData } from '@/types/graduation';
 
 export const graduationData: GraduationData = {
   summary: { totalRequiredCredits: 130, completedCredits: 100 },

@@ -3,10 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { Header } from './components/Header';
 
 // Route targets from pages directory
-import { LoginPage } from './pages/Auth/LoginPage';
-import { SignupPage } from './pages/Auth/SignupPage';
-import SignupSuccess from './pages/Auth/SignupSuccess';
-import Dashboard from './pages/Dashboard/Dashboard';
+import { LoginPage } from './pages/auth/LoginPage';
+import { SignupPage } from './pages/auth/SignupPage';
+import SignupSuccess from './pages/auth/SignupSuccess';
+import Dashboard from './pages/dashboard/Dashboard';
 import Search from './pages/Search/Search';
 import Recommend from './pages/Search/Recommend';
 import Graduation from './pages/Search/Graduation';

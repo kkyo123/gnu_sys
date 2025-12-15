@@ -1,5 +1,5 @@
 // DEBUG: 테스트용 강의 리스트 테이블 컴포넌트 (필요 시 삭제)
-import type { TimetableCourseStandard } from '../../../types/mypage';
+import type { TimetableCourseStandard } from '@/types/mypage';
 
 interface CourseDebugTableProps {
   title?: string;

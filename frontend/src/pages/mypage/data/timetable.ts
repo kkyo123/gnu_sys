@@ -15,3 +15,4 @@ export const DAYS: Record<Weekday, string> = {
   3: '목',
   4: '금',
 };
+

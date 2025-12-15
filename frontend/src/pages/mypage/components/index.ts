@@ -2,7 +2,7 @@ export { CreditOverview } from './CreditOverview';
 export { Timetable } from './Timetable';
 export { KeywordPreferences } from './KeywordPreferences';
 export { MyPageSidebar } from './MyPageSidebar';
-export { TimetableEditSection } from './TimetableEditSection';
+export { TimetableEditSection } from '../sections/TimetableEditSection';
 export { CourseDebugTable } from './CourseDebugTable';
 export { RequiredCourseList } from './RequiredCourseList';
 export { SemesterGpaTrend } from './SemesterGpaTrend';

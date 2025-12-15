@@ -6,8 +6,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { MyPageUser, AcademicData } from '@/types/mypage';
-import { MYPAGE_SECTION_IDS, type MyPageSectionId } from '@/pages/Mypage/config';
-import type { KeywordGroupKey } from '@/pages/Mypage/keywordConfig';
+import { MYPAGE_SECTION_IDS, type MyPageSectionId } from '@/pages/mypage/config';
+import type { KeywordGroupKey } from '@/pages/mypage/keywordConfig';
 
 interface MyPageSidebarProps {
   user?: MyPageUser | null;

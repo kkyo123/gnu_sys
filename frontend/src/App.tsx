@@ -10,7 +10,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Search from './pages/Search/Search';
 import Recommend from './pages/Search/Recommend';
 import Graduation from './pages/Search/Graduation';
-import Mypage from './pages/mypage/Mypage';
+import Mypage from './pages/mypage/mypage';
 
 type User = any;
 

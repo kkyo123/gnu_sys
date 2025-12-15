@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  getRequiredCourses,
+  getRequiredCourses,   
   getSemesterGPA,
   getMyEnrollments,
-  type RequiredCourseItem,
-  type SemesterGPAItem,
-  type EnrollmentItem,
+  type RequiredCourseItem,   // course_code, namd, is_completed
+  type SemesterGPAItem,      // year, semester, gpa, credits
+  type EnrollmentItem,       // id, student_id, course_code, course_name, professor, timeslot, start_time, end_time, year, semester, status, category, category_label, category_original, grade
 } from '@/lib/api/mypage';
 
 export function useRequiredCourses(token?: string | null) {

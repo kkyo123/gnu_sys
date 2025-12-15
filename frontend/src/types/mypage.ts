@@ -60,7 +60,7 @@ export interface CourseListItem {
   category: string;
 }
 
-import type { KeywordGroupKey } from '@/pages/Mypage/keywordConfig';
+import type { KeywordGroupKey } from '@/pages/mypage/keywordConfig';
 
 export interface KeywordPrefs {
   selected: Record<KeywordGroupKey, string[]>;

@@ -1,4 +1,4 @@
-export { default as Mypage } from './Mypage';
+export { default as Mypage } from './mypage';
 export { CreditOverview, Timetable, KeywordPreferences } from './components';
 export {
   START_HOUR,
@@ -8,5 +8,5 @@ export {
   PROGRESS_STROKE,
   PROGRESS_CIRCUMFERENCE,
   DAYS,
-} from './constants';
-export { academicDataMock, timetableCoursesMock, keywordPrefsMock } from './mockData';
+} from './data';
+export { academicDataMock, timetableCoursesMock, keywordPrefsMock } from './data';

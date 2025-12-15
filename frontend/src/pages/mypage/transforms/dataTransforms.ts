@@ -1,6 +1,6 @@
 import type { AcademicData, KeywordPrefs } from '@/types/mypage';
 import type { CreditSummaryResponse } from '@/lib/api/mypage';
-import { KEYWORD_GROUPS, type KeywordGroupKey } from './keywordConfig';
+import { KEYWORD_GROUPS, type KeywordGroupKey } from '../keywordConfig';
 
 const CREDIT_SECTIONS = [
   { field: 'major_required', key: 'major-required', name: '전공필수' },

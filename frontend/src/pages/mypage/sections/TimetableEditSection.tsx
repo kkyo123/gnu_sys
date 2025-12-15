@@ -12,11 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { coursesByTab, type CourseTab } from '@/pages/Mypage/courseData';
+import { coursesByTab, type CourseTab } from '@/pages/mypage/courseData';
 import type { TimetableCourse, TimetableCourseStandard, Weekday } from '@/types/mypage';
-import { TimetableGrid } from './TimetableGrid';
+import { TimetableGrid } from '../components/TimetableGrid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SEMESTER_OPTIONS } from '@/pages/Mypage/config';
+import { SEMESTER_OPTIONS } from '@/pages/mypage/config';
 
 type TabKey = CourseTab | 'selected';
 

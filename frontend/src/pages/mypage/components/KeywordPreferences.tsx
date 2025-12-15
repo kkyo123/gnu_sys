@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { KeywordPrefs } from '@/types/mypage';
-import { KEYWORD_GROUPS, type KeywordGroupKey } from '@/pages/Mypage/keywordConfig';
+import { KEYWORD_GROUPS, type KeywordGroupKey } from '@/pages/mypage/keywordConfig';
 
 interface KeywordPreferencesProps {
   prefs: KeywordPrefs;

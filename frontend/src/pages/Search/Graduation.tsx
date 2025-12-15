@@ -9,11 +9,11 @@ import { CertificationCard } from './components/CertificationCard';
 import { GraduationOverview } from './components/GraduationOverview';
 import { RecommendedCourses } from './components/RecommendedCourses';
 import { RequirementGrid } from './components/RequirementGrid';
-import { CreditOverviewSection } from '@/Mypage/CreditOverviewSection';
+import { CreditOverviewSection } from '@/pages/mypage/sections/CreditOverviewSection';
 
 import LectureDetailModal from '@/components/LectureDetailModal';
 import type { CourseOut } from '@/components/lectureCard';
-import { useEnrollments } from '@/Mypage/hooks';
+import { useEnrollments } from '@/pages/mypage/sections/hooks';
 import type { EnrollmentItem } from '@/lib/api/mypage';
 
 const API_BASE = (import.meta as any).env.VITE_API_BASE_URL as string;

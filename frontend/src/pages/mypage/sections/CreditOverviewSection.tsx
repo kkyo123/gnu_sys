@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CreditOverview } from './components';
-import { mapCreditSummaryToAcademicData } from './utils/mapCreditSummary';
+import { CreditOverview } from '../components';
+import { mapCreditSummaryToAcademicData } from '../utils/mapCreditSummary';
 import type { AcademicData } from '@/types/mypage';
 import { getCreditSummary } from '@/lib/api/mypage';
 

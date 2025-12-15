@@ -12,13 +12,13 @@ import {
   EnrollmentDebugTable,
 } from './components';
 import { CourseDebugTable } from './components/CourseDebugTable';
-import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './constants';
-import { toMainTimetable } from './courseTransforms';
+import { DAYS, SLOT_COUNT, SLOT_HEIGHT, START_HOUR } from './data';
+import { toMainTimetable } from './transforms/courseTransforms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getKeywords, getMyTimetable } from '@/lib/api/mypage';
-import { mapKeywordsToPrefs } from './dataTransforms';
-import { useEnrollments, useRequiredCourses, useSemesterGpa } from './hooks';
-import { CreditOverviewSection } from './CreditOverviewSection';
+import { mapKeywordsToPrefs } from '@mypage/transforms/dataTransforms';
+import { useEnrollments, useRequiredCourses, useSemesterGpa } from './sections/hooks';
+import { CreditOverviewSection } from './sections/CreditOverviewSection';
 import {
   DEFAULT_SELECTED_SEMESTER,
   MYPAGE_SECTION_IDS,

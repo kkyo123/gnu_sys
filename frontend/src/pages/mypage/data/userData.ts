@@ -1,12 +1,12 @@
 import type { MyPageUser, AcademicData, TimetableCourse, KeywordPrefs, TimetableCourseStandard } from '@/types/mypage';
-import { DEFAULT_SELECTED_KEYWORDS } from './keywordConfig';
+import { DEFAULT_SELECTED_KEYWORDS } from '../keywordConfig';
 import {
   mockCoursesBySemester,
   mockUserDefinedCourses,
   mockSystemCourses,
   mockGraduationCourses,
-} from './courseData';
-import { toMainTimetable } from './courseTransforms';
+} from '../courseData';
+import { toMainTimetable } from '../transforms/courseTransforms';
 
 
 export const mockUser: MyPageUser = {

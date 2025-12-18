@@ -132,7 +132,7 @@ export function LoginPage({ onLogin, onSignup }: LoginPageProps) {
 
         <div className="mt-8 text-center text-xs text-muted-foreground">
           <p>UniCourse 는 학생들의 수강을 돕습니다</p>
-          <p className="mt-1">© 2024 UniCourse. All rights reserved.</p>
+          <p className="mt-1">© 2025-2학기 전공종합설계PBLI 에서 제작</p>
         </div>
       </div>
     </div>

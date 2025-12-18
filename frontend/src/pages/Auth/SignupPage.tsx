@@ -49,6 +49,10 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
       setError('학번은 숫자 8~10자리여야 합니다');
       return;
     }
+    if (formData.username.trim().length === 0) {
+      setError('아이디를 입력해 주세요');
+      return;
+    }
     if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,16}$/.test(formData.password)) {
       setError('비밀번호는 영문/숫자/특수문자 포함 8~16자여야 합니다');
       return;
@@ -61,6 +65,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
       setError('비밀번호가 일치하지 않습니다');
       return;
     }
+    
     try {
       setIsLoading(true);
       await register({
@@ -142,8 +147,7 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="space-y-2">
                   <Label htmlFor="username">아이디</Label>
                   <Input id="username" placeholder="student123" value={formData.username} onChange={(e) => handleInputChange('username', e.target.value)} required aria-invalid={!!fieldErrors.username} />
                   {fieldErrors.username && <p className="text-xs text-red-600 mt-1">{fieldErrors.username}</p>}
@@ -152,7 +156,6 @@ export function SignupPage({ onLogin, onBack }: SignupPageProps) {
                   <Label htmlFor="department">학과</Label>
                   <Input id="department" placeholder="컴퓨터공학과" value={formData.department} onChange={(e) => handleInputChange('department', e.target.value)} required />
                 </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">비밀번호</Label>
